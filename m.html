@@ -80,7 +80,7 @@
     }
     .form-grid {
       display: grid;
-      grid-template-columns: 1.1fr 1.2fr;
+      grid-template-columns: 1fr 1fr;
       gap: 10px 12px;
       align-items: flex-end;
     }
@@ -114,11 +114,13 @@
       color: #1d4ed8;
       border: 1px solid #bfdbfe;
     }
+    .btn-secondary:hover { background: #dbeafe; }
     .btn-danger {
       background: #fee2e2;
       color: #b91c1c;
       border: 1px solid #fecaca;
     }
+    .btn-danger:hover { background: #fecaca; }
 
     .table-wrapper {
       border-radius: 12px;
@@ -157,7 +159,7 @@
   <div class="top-row">
     <div>
       <h1>운동 기록</h1>
-      <div class="subtitle">운동 입력 → 표 추가 → 오늘 운동 완료로 하루 단위 저장</div>
+      <div class="subtitle">운동 입력 → 표 추가 → &ldquo;오늘 운동 완료&rdquo;로 하루 단위 저장</div>
     </div>
     <div class="date-field">
       <label for="dateInput">날짜</label>
@@ -165,7 +167,7 @@
     </div>
   </div>
 
-  <!-- 입력 -->
+  <!-- 입력 영역 -->
   <div class="section-title">오늘 운동 입력</div>
   <div class="card">
     <div class="form-grid">
@@ -193,7 +195,7 @@
     </div>
   </div>
 
-  <!-- 오늘 운동 -->
+  <!-- 오늘 운동 표 -->
   <div class="section-title" style="display:flex; align-items:center; gap:8px;">
     오늘 운동 <span id="todayLabel" class="tag"></span>
   </div>
@@ -213,12 +215,12 @@
     </table>
   </div>
 
-  <div style="margin-top:10px; display:flex; justify-content:space-between;">
+  <div style="margin-top:10px; display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
     <button class="btn-secondary" id="clearTodayBtn">오늘 운동 비우기</button>
     <button class="btn-primary" id="finishDayBtn">오늘 운동 완료</button>
   </div>
 
-  <!-- 로그 -->
+  <!-- 저장된 로그 -->
   <div class="section-title" style="margin-top:24px;">저장된 운동 기록</div>
   <div class="table-wrapper">
     <table>
@@ -238,8 +240,10 @@
 </div>
 
 <script>
-  const STORAGE_KEY = "workout_sessions_v2";
+  // ---- 설정 ----
+  const STORAGE_KEY = "workout_sessions_v3";
 
+  // 운동별 입력 타입
   const CONFIG = {
     "스쿼트": "weight",
     "레그 익스텐션": "weight",
@@ -247,13 +251,13 @@
     "팩덱 플라이": "weight",
     "크런치": "reps",
     "레그 레이즈": "reps",
-    "플랭크": "time",
+    "플랭크": "timeSet",   // 세트 + 시간(분)
     "스텝밀": "time",
     "인터벌 러닝": "distance"
   };
 
-  let todayEntries = [];
-  let saved = [];
+  let todayEntries = [];  // 오늘 입력한 운동들
+  let saved = [];         // 저장된 날별 세션들
 
   const dateInput = document.getElementById("dateInput");
   const todayLabel = document.getElementById("todayLabel");
@@ -262,30 +266,45 @@
   const todayBody = document.getElementById("todayBody");
   const logBody = document.getElementById("logBody");
 
-  function today() {
+  function todayISO() {
     return new Date().toISOString().split("T")[0];
   }
 
   function init() {
-    dateInput.value = today();
+    dateInput.value = todayISO();
     todayLabel.textContent = dateInput.value;
-    load();
-    renderDynamic();
-    renderToday();
+    loadSaved();
+    renderDynamicInputs();
+    renderTodayTable();
+
+    exerciseSelect.onchange = renderDynamicInputs;
+    document.getElementById("addEntryBtn").onclick = addEntry;
+    document.getElementById("clearCurrentBtn").onclick = renderDynamicInputs;
+    document.getElementById("clearTodayBtn").onclick = clearToday;
+    document.getElementById("finishDayBtn").onclick = finishDay;
+    dateInput.onchange = () => {
+      todayLabel.textContent = dateInput.value || todayISO();
+    };
   }
 
-  function load() {
+  function loadSaved() {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) saved = JSON.parse(raw);
-    renderSaved();
+    if (raw) {
+      try {
+        saved = JSON.parse(raw);
+      } catch (e) {
+        saved = [];
+      }
+    }
+    renderSavedTable();
   }
 
-  function save() {
+  function saveAll() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
   }
 
-  // --- dynamic inputs ---
-  function renderDynamic() {
+  // ---- 동적 입력 UI ----
+  function renderDynamicInputs() {
     const type = CONFIG[exerciseSelect.value];
 
     if (type === "weight") {
@@ -318,45 +337,80 @@
           <input id="time" type="number" placeholder="분">
         </div>
       `;
+    } else if (type === "timeSet") {
+      dynamicInputs.innerHTML = `
+        <label>세트 / 시간(분)</label>
+        <div class="inline-group">
+          <input id="sets" type="number" placeholder="세트">
+          <input id="time" type="number" placeholder="분">
+        </div>
+      `;
+    } else {
+      dynamicInputs.innerHTML = "";
     }
   }
 
-  // --- add entry ---
+  // ---- 입력값 읽어서 todayEntries에 추가 ----
   function addEntry() {
-    const type = CONFIG[exerciseSelect.value];
+    const ex = exerciseSelect.value;
+    const type = CONFIG[ex];
 
     let weight = null, sets = null, reps = null, time = null, dist = null;
 
     if (type === "weight") {
       weight = Number(document.getElementById("weight").value);
-      sets = Number(document.getElementById("sets").value);
-      reps = Number(document.getElementById("reps").value);
-      if (!weight || !sets || !reps) return alert("중량/세트/횟수를 모두 입력해줘!");
+      sets  = Number(document.getElementById("sets").value);
+      reps  = Number(document.getElementById("reps").value);
+      if (!weight || !sets || !reps) {
+        alert("중량/세트/횟수를 모두 입력해줘!");
+        return;
+      }
     } else if (type === "reps") {
       sets = Number(document.getElementById("sets").value);
       reps = Number(document.getElementById("reps").value);
-      if (!sets || !reps) return alert("세트/횟수를 모두 입력해줘!");
+      if (!sets || !reps) {
+        alert("세트/횟수를 모두 입력해줘!");
+        return;
+      }
     } else if (type === "time") {
       time = Number(document.getElementById("time").value);
-      if (!time) return alert("시간(분)을 입력해줘!");
+      if (!time) {
+        alert("시간(분)을 입력해줘!");
+        return;
+      }
     } else if (type === "distance") {
       dist = Number(document.getElementById("distance").value);
       time = Number(document.getElementById("time").value);
-      if (!dist || !time) return alert("거리/시간 모두 입력해줘!");
+      if (!dist || !time) {
+        alert("거리/시간 모두 입력해줘!");
+        return;
+      }
+    } else if (type === "timeSet") {
+      sets = Number(document.getElementById("sets").value);
+      time = Number(document.getElementById("time").value);
+      if (!sets || !time) {
+        alert("세트와 시간(분)을 모두 입력해줘!");
+        return;
+      }
     }
 
     todayEntries.push({
       id: Date.now(),
-      ex: exerciseSelect.value,
-      type, weight, sets, reps, time, dist
+      ex,
+      type,
+      weight,
+      sets,
+      reps,
+      time,
+      dist
     });
 
-    renderToday();
-    renderDynamic();
+    renderTodayTable();
+    renderDynamicInputs(); // 입력창 리셋
   }
 
-  // --- render today ---
-  function renderToday() {
+  // ---- 오늘 운동 표 렌더링 ----
+  function renderTodayTable() {
     if (!todayEntries.length) {
       todayBody.innerHTML =
         `<tr><td colspan="4" class="empty-row">아직 아무 운동도 추가되지 않았어요.</td></tr>`;
@@ -366,10 +420,14 @@
     todayBody.innerHTML = todayEntries.map(e => {
       let value = "-";
       if (e.type === "weight") value = `${e.weight}kg`;
-      if (e.type === "time") value = `${e.time}분`;
-      if (e.type === "distance") value = `${e.dist}km / ${e.time}분`;
+      else if (e.type === "time") value = `${e.time}분`;
+      else if (e.type === "distance") value = `${e.dist}km / ${e.time}분`;
+      else if (e.type === "timeSet") value = `${e.time}분`;
 
-      const sr = (e.sets && e.reps) ? `${e.sets}×${e.reps}` : "-";
+      let sr = "-";
+      if (e.sets && e.reps) sr = `${e.sets}×${e.reps}`;
+      else if (e.sets) sr = `${e.sets}세트`;
+      else if (e.reps) sr = `${e.reps}회`;
 
       return `
         <tr>
@@ -377,45 +435,50 @@
           <td>${value}</td>
           <td>${sr}</td>
           <td><button class="btn-danger" data-id="${e.id}">삭제</button></td>
-        </tr>`;
+        </tr>
+      `;
     }).join("");
 
     document.querySelectorAll(".btn-danger[data-id]").forEach(btn => {
       btn.onclick = () => {
         const id = Number(btn.dataset.id);
         todayEntries = todayEntries.filter(e => e.id !== id);
-        renderToday();
+        renderTodayTable();
       };
     });
   }
 
-  // --- clear today ---
+  // ---- 오늘 운동 비우기 ----
   function clearToday() {
     if (!todayEntries.length) return;
     if (!confirm("오늘 운동을 전부 비울까?")) return;
     todayEntries = [];
-    renderToday();
+    renderTodayTable();
   }
 
-  // --- finish ---
+  // ---- 오늘 운동 완료 → 하루 단위 저장 ----
   function finishDay() {
-    if (!todayEntries.length) return alert("오늘 운동이 비어있어!");
+    if (!todayEntries.length) {
+      alert("오늘 운동이 비어있어!");
+      return;
+    }
+    const date = dateInput.value || todayISO();
 
     saved.push({
-      date: dateInput.value,
+      date,
       items: todayEntries,
       time: Date.now()
     });
 
-    save();
+    saveAll();
     todayEntries = [];
-    renderToday();
-    renderSaved();
+    renderTodayTable();
+    renderSavedTable();
     alert("저장 완료!");
   }
 
-  // --- render saved ---
-  function renderSaved() {
+  // ---- 저장된 기록 표 렌더링 ----
+  function renderSavedTable() {
     if (!saved.length) {
       logBody.innerHTML =
         `<tr><td colspan="4" class="empty-row">저장된 기록 없음</td></tr>`;
@@ -431,10 +494,14 @@
       session.items.forEach(e => {
         let value = "-";
         if (e.type === "weight") value = `${e.weight}kg`;
-        if (e.type === "time") value = `${e.time}분`;
-        if (e.type === "distance") value = `${e.dist}km / ${e.time}분`;
+        else if (e.type === "time") value = `${e.time}분`;
+        else if (e.type === "distance") value = `${e.dist}km / ${e.time}분`;
+        else if (e.type === "timeSet") value = `${e.time}분`;
 
-        const sr = (e.sets && e.reps) ? `${e.sets}×${e.reps}` : "-";
+        let sr = "-";
+        if (e.sets && e.reps) sr = `${e.sets}×${e.reps}`;
+        else if (e.sets) sr = `${e.sets}세트`;
+        else if (e.reps) sr = `${e.reps}회`;
 
         rows.push(`
           <tr>
@@ -450,15 +517,7 @@
     logBody.innerHTML = rows.join("");
   }
 
-  // --- events ---
-  exerciseSelect.onchange = renderDynamic;
-  document.getElementById("addEntryBtn").onclick = addEntry;
-  document.getElementById("clearCurrentBtn").onclick = renderDynamic;
-  document.getElementById("clearTodayBtn").onclick = clearToday;
-  document.getElementById("finishDayBtn").onclick = finishDay;
-
   init();
 </script>
-
 </body>
 </html>
