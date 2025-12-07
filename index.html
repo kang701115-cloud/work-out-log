@@ -3,175 +3,207 @@
 <head>
   <meta charset="UTF-8" />
   <title>운동 기록</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      padding: 24px;
+      padding: 20px;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #f3f4f6;
-      color: #111827;
       display: flex;
       justify-content: center;
     }
+
     .container {
       width: 100%;
-      max-width: 960px;
+      max-width: 600px;      /* 모바일 대응 */
       background: #ffffff;
-      border-radius: 16px;
-      padding: 20px 24px 28px;
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+      border-radius: 14px;
+      padding: 18px 20px 28px;
+      box-shadow: 0 16px 28px rgba(0,0,0,0.12);
       border: 1px solid #e5e7eb;
     }
+
     h1 {
       font-size: 22px;
       margin: 0 0 4px;
       color: #0f172a;
     }
+
     .subtitle {
       font-size: 13px;
       color: #6b7280;
-      margin-bottom: 18px;
+      margin-bottom: 14px;
     }
-    .top-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 8px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-    .date-field {
-      display: flex;
-      flex-direction: column;
-      font-size: 12px;
-      gap: 4px;
-    }
-    label {
-      color: #4b5563;
-      font-size: 12px;
-    }
+
+    /* 기본 입력 요소 */
+    label { font-size: 12px; color: #374151; }
     input, select {
-      font-family: inherit;
-      font-size: 13px;
+      width: 100%;
       border-radius: 10px;
       border: 1px solid #d1d5db;
-      padding: 7px 9px;
-      background: #ffffff;
-      color: #111827;
+      padding: 8px 10px;
+      font-size: 13px;
+      background: #fff;
       outline: none;
     }
     input:focus, select:focus {
       border-color: #2563eb;
-      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+      box-shadow: 0 0 0 1px rgba(37,99,235,0.2);
     }
-    .section-title {
-      font-size: 15px;
-      font-weight: 600;
-      margin: 18px 0 8px;
-      color: #111827;
-    }
-    .card {
-      border-radius: 14px;
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
-      padding: 12px 14px 14px;
-      margin-bottom: 12px;
-    }
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px 12px;
-      align-items: flex-end;
-    }
-    .field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
-    .inline-group { display: flex; gap: 6px; }
-    .inline-group > * { flex: 1; }
 
+    /* 버튼 */
     button {
-      border-radius: 999px;
-      border: none;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
-      padding: 8px 16px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: none;
       cursor: pointer;
-      white-space: nowrap;
+      width: 100%;
     }
     .btn-primary {
       background: #2563eb;
-      color: #eff6ff;
-      box-shadow: 0 9px 18px rgba(37, 99, 235, 0.35);
+      color: white;
     }
     .btn-primary:hover { background: #1d4ed8; }
+
     .btn-ghost {
-      background: transparent;
-      color: #6b7280;
+      background: #f9fafb;
       border: 1px solid #d1d5db;
+      color: #374151;
     }
     .btn-ghost:hover { background: #f3f4f6; }
-    .btn-secondary {
-      background: #e5edff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-    }
-    .btn-secondary:hover { background: #dbeafe; }
+
     .btn-danger {
       background: #fee2e2;
       color: #b91c1c;
       border: 1px solid #fecaca;
-    }
-    .btn-danger:hover { background: #fecaca; }
-
-    .table-wrapper {
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      overflow: hidden;
-      background: #ffffff;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
+      padding: 6px 10px;
+      border-radius: 8px;
       font-size: 12px;
     }
-    thead { background: #eff6ff; }
+
+    /* 카드/섹션 */
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 22px;
+      margin-bottom: 8px;
+    }
+
+    .card {
+      background: #f9fafb;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      padding: 14px;
+    }
+
+    /* 입력칸 그리드 */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .inline-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* 표 */
+    .table-wrapper {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      margin-top: 6px;
+    }
+
+    table {
+      width: 100%;
+      font-size: 12px;
+      border-collapse: collapse;
+    }
+
     th, td {
-      padding: 8px 10px;
+      padding: 8px 6px;
       border-bottom: 1px solid #e5e7eb;
       text-align: left;
     }
+
+    thead { background: #eef2ff; }
     .empty-row {
       text-align: center;
+      padding: 14px 8px;
       color: #9ca3af;
-      padding: 16px 8px;
-      font-size: 12px;
     }
+
+    /* 태그 */
     .tag {
-      padding: 2px 8px;
-      font-size: 11px;
-      border-radius: 999px;
       background: #eef2ff;
       color: #3730a3;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      margin-left: 6px;
     }
+
+    /* ------- 모바일 최적화 ------- */
+    @media (max-width: 480px) {
+
+      .form-grid {
+        grid-template-columns: 1fr; /* 1열 */
+      }
+
+      .inline-group {
+        flex-direction: column; /* 줄바꿈 */
+      }
+
+      th, td {
+        font-size: 11px;
+        padding: 6px;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      .top-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+    }
+
   </style>
 </head>
+
 <body>
 <div class="container">
-  <div class="top-row">
+
+  <!-- 상단 -->
+  <div class="top-row" style="display:flex; justify-content:space-between; align-items:flex-end;">
     <div>
       <h1>운동 기록</h1>
-      <div class="subtitle">운동 입력 → 표 추가 → &ldquo;오늘 운동 완료&rdquo;로 하루 단위 저장</div>
+      <div class="subtitle">운동 입력 → 표 추가 → "오늘 운동 완료"</div>
     </div>
-    <div class="date-field">
-      <label for="dateInput">날짜</label>
-      <input type="date" id="dateInput" />
+
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <label>날짜</label>
+      <input type="date" id="dateInput">
     </div>
   </div>
 
   <!-- 입력 영역 -->
   <div class="section-title">오늘 운동 입력</div>
+
   <div class="card">
     <div class="form-grid">
-      <div class="field">
+      <div>
         <label>운동 선택</label>
         <select id="exerciseSelect">
           <option value="스쿼트">스쿼트</option>
@@ -186,64 +218,65 @@
         </select>
       </div>
 
-      <div class="field" id="dynamicInputs"></div>
+      <div id="dynamicInputs"></div>
     </div>
 
-    <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end;">
+    <div style="margin-top:12px; display:flex; gap:8px; flex-direction:column;">
       <button class="btn-ghost" id="clearCurrentBtn">입력 초기화</button>
       <button class="btn-primary" id="addEntryBtn">완료 → 표에 추가</button>
     </div>
   </div>
 
   <!-- 오늘 운동 표 -->
-  <div class="section-title" style="display:flex; align-items:center; gap:8px;">
+  <div class="section-title" style="display:flex; align-items:center;">
     오늘 운동 <span id="todayLabel" class="tag"></span>
   </div>
+
   <div class="table-wrapper">
     <table>
       <thead>
       <tr>
         <th>운동</th>
-        <th>중량 / 시간</th>
-        <th>세트 × 횟수</th>
-        <th style="width:70px;">삭제</th>
+        <th>중량/시간</th>
+        <th>세트×횟수</th>
+        <th style="width:50px;">삭제</th>
       </tr>
       </thead>
       <tbody id="todayBody">
-      <tr><td colspan="4" class="empty-row">아직 아무 운동도 추가되지 않았어요.</td></tr>
+      <tr><td colspan="4" class="empty-row">아직 추가된 운동이 없습니다.</td></tr>
       </tbody>
     </table>
   </div>
 
-  <div style="margin-top:10px; display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-    <button class="btn-secondary" id="clearTodayBtn">오늘 운동 비우기</button>
+  <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+    <button class="btn-ghost" id="clearTodayBtn">오늘 운동 비우기</button>
     <button class="btn-primary" id="finishDayBtn">오늘 운동 완료</button>
   </div>
 
-  <!-- 저장된 로그 -->
-  <div class="section-title" style="margin-top:24px;">저장된 운동 기록</div>
+  <!-- 저장 -->
+  <div class="section-title" style="margin-top:26px;">저장된 운동 기록</div>
+
   <div class="table-wrapper">
     <table>
       <thead>
       <tr>
-        <th style="width:90px;">날짜</th>
+        <th style="width:80px;">날짜</th>
         <th>운동</th>
-        <th>중량 / 시간</th>
+        <th>중량/시간</th>
         <th>세트×횟수</th>
       </tr>
       </thead>
       <tbody id="logBody">
-      <tr><td colspan="4" class="empty-row">저장된 기록 없음</td></tr>
+      <tr><td colspan="4" class="empty-row">기록 없음</td></tr>
       </tbody>
     </table>
   </div>
+
 </div>
 
 <script>
-  // ---- 설정 ----
-  const STORAGE_KEY = "workout_sessions_v3";
+  const STORAGE_KEY = "workout_sessions_mobile_v1";
 
-  // 운동별 입력 타입
   const CONFIG = {
     "스쿼트": "weight",
     "레그 익스텐션": "weight",
@@ -251,13 +284,17 @@
     "팩덱 플라이": "weight",
     "크런치": "reps",
     "레그 레이즈": "reps",
-    "플랭크": "timeSet",   // 세트 + 시간(분)
+    "플랭크": "timeSet",
     "스텝밀": "time",
     "인터벌 러닝": "distance"
   };
 
-  let todayEntries = [];  // 오늘 입력한 운동들
-  let saved = [];         // 저장된 날별 세션들
+  let todayEntries = [];
+  let saved = [];
+
+  function todayISO() {
+    return new Date().toISOString().split("T")[0];
+  }
 
   const dateInput = document.getElementById("dateInput");
   const todayLabel = document.getElementById("todayLabel");
@@ -266,13 +303,10 @@
   const todayBody = document.getElementById("todayBody");
   const logBody = document.getElementById("logBody");
 
-  function todayISO() {
-    return new Date().toISOString().split("T")[0];
-  }
-
   function init() {
     dateInput.value = todayISO();
     todayLabel.textContent = dateInput.value;
+
     loadSaved();
     renderDynamicInputs();
     renderTodayTable();
@@ -280,22 +314,15 @@
     exerciseSelect.onchange = renderDynamicInputs;
     document.getElementById("addEntryBtn").onclick = addEntry;
     document.getElementById("clearCurrentBtn").onclick = renderDynamicInputs;
-    document.getElementById("clearTodayBtn").onclick = clearToday;
+    document.getElementById("clearTodayBtn").onclick = () => { todayEntries = []; renderTodayTable(); };
     document.getElementById("finishDayBtn").onclick = finishDay;
-    dateInput.onchange = () => {
-      todayLabel.textContent = dateInput.value || todayISO();
-    };
+
+    dateInput.onchange = () => { todayLabel.textContent = dateInput.value; };
   }
 
   function loadSaved() {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      try {
-        saved = JSON.parse(raw);
-      } catch (e) {
-        saved = [];
-      }
-    }
+    saved = raw ? JSON.parse(raw) : [];
     renderSavedTable();
   }
 
@@ -303,7 +330,7 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
   }
 
-  // ---- 동적 입력 UI ----
+  /* --- UI 생성 --- */
   function renderDynamicInputs() {
     const type = CONFIG[exerciseSelect.value];
 
@@ -314,115 +341,90 @@
           <input id="weight" type="number" placeholder="kg">
           <input id="sets" type="number" placeholder="세트">
           <input id="reps" type="number" placeholder="횟수">
-        </div>
-      `;
+        </div>`;
     } else if (type === "reps") {
       dynamicInputs.innerHTML = `
         <label>세트 / 횟수</label>
         <div class="inline-group">
           <input id="sets" type="number" placeholder="세트">
           <input id="reps" type="number" placeholder="횟수">
-        </div>
-      `;
+        </div>`;
     } else if (type === "time") {
       dynamicInputs.innerHTML = `
-        <label>시간 (분)</label>
-        <input id="time" type="number" placeholder="예: 20">
-      `;
+        <label>시간(분)</label>
+        <input id="time" type="number" placeholder="분">`;
     } else if (type === "distance") {
       dynamicInputs.innerHTML = `
         <label>거리 / 시간</label>
         <div class="inline-group">
           <input id="distance" type="number" step="0.1" placeholder="km">
           <input id="time" type="number" placeholder="분">
-        </div>
-      `;
+        </div>`;
     } else if (type === "timeSet") {
       dynamicInputs.innerHTML = `
         <label>세트 / 시간(분)</label>
         <div class="inline-group">
           <input id="sets" type="number" placeholder="세트">
           <input id="time" type="number" placeholder="분">
-        </div>
-      `;
-    } else {
-      dynamicInputs.innerHTML = "";
+        </div>`;
     }
   }
 
-  // ---- 입력값 읽어서 todayEntries에 추가 ----
+  /* --- 입력 저장 --- */
   function addEntry() {
     const ex = exerciseSelect.value;
     const type = CONFIG[ex];
 
-    let weight = null, sets = null, reps = null, time = null, dist = null;
+    let weight=null, sets=null, reps=null, time=null, dist=null;
 
     if (type === "weight") {
-      weight = Number(document.getElementById("weight").value);
-      sets  = Number(document.getElementById("sets").value);
-      reps  = Number(document.getElementById("reps").value);
-      if (!weight || !sets || !reps) {
-        alert("중량/세트/횟수를 모두 입력해줘!");
-        return;
-      }
+      weight = +document.getElementById("weight").value;
+      sets = +document.getElementById("sets").value;
+      reps = +document.getElementById("reps").value;
+      if (!weight || !sets || !reps) return alert("중량/세트/횟수 입력해주세요!");
+
     } else if (type === "reps") {
-      sets = Number(document.getElementById("sets").value);
-      reps = Number(document.getElementById("reps").value);
-      if (!sets || !reps) {
-        alert("세트/횟수를 모두 입력해줘!");
-        return;
-      }
+      sets = +document.getElementById("sets").value;
+      reps = +document.getElementById("reps").value;
+      if (!sets || !reps) return alert("세트/횟수 입력해주세요!");
+
     } else if (type === "time") {
-      time = Number(document.getElementById("time").value);
-      if (!time) {
-        alert("시간(분)을 입력해줘!");
-        return;
-      }
+      time = +document.getElementById("time").value;
+      if (!time) return alert("시간 입력!");
+
     } else if (type === "distance") {
-      dist = Number(document.getElementById("distance").value);
-      time = Number(document.getElementById("time").value);
-      if (!dist || !time) {
-        alert("거리/시간 모두 입력해줘!");
-        return;
-      }
+      dist = +document.getElementById("distance").value;
+      time = +document.getElementById("time").value;
+      if (!dist || !time) return alert("거리/시간 입력!");
+
     } else if (type === "timeSet") {
-      sets = Number(document.getElementById("sets").value);
-      time = Number(document.getElementById("time").value);
-      if (!sets || !time) {
-        alert("세트와 시간(분)을 모두 입력해줘!");
-        return;
-      }
+      sets = +document.getElementById("sets").value;
+      time = +document.getElementById("time").value;
+      if (!sets || !time) return alert("세트/시간 입력!");
     }
 
     todayEntries.push({
       id: Date.now(),
-      ex,
-      type,
-      weight,
-      sets,
-      reps,
-      time,
-      dist
+      ex, type, weight, sets, reps, time, dist
     });
 
     renderTodayTable();
-    renderDynamicInputs(); // 입력창 리셋
+    renderDynamicInputs();
   }
 
-  // ---- 오늘 운동 표 렌더링 ----
+  /* --- 오늘 표 렌더링 --- */
   function renderTodayTable() {
     if (!todayEntries.length) {
-      todayBody.innerHTML =
-        `<tr><td colspan="4" class="empty-row">아직 아무 운동도 추가되지 않았어요.</td></tr>`;
+      todayBody.innerHTML = `<tr><td colspan="4" class="empty-row">아직 추가된 운동이 없습니다.</td></tr>`;
       return;
     }
 
     todayBody.innerHTML = todayEntries.map(e => {
-      let value = "-";
-      if (e.type === "weight") value = `${e.weight}kg`;
-      else if (e.type === "time") value = `${e.time}분`;
-      else if (e.type === "distance") value = `${e.dist}km / ${e.time}분`;
-      else if (e.type === "timeSet") value = `${e.time}분`;
+      let v = "-";
+      if (e.type === "weight") v = `${e.weight}kg`;
+      else if (e.type === "time") v = `${e.time}분`;
+      else if (e.type === "distance") v = `${e.dist}km / ${e.time}분`;
+      else if (e.type === "timeSet") v = `${e.time}분`;
 
       let sr = "-";
       if (e.sets && e.reps) sr = `${e.sets}×${e.reps}`;
@@ -432,85 +434,67 @@
       return `
         <tr>
           <td>${e.ex}</td>
-          <td>${value}</td>
+          <td>${v}</td>
           <td>${sr}</td>
           <td><button class="btn-danger" data-id="${e.id}">삭제</button></td>
-        </tr>
-      `;
+        </tr>`;
     }).join("");
 
-    document.querySelectorAll(".btn-danger[data-id]").forEach(btn => {
+    document.querySelectorAll(".btn-danger").forEach(btn => {
       btn.onclick = () => {
-        const id = Number(btn.dataset.id);
-        todayEntries = todayEntries.filter(e => e.id !== id);
+        const id = +btn.dataset.id;
+        todayEntries = todayEntries.filter(x => x.id !== id);
         renderTodayTable();
       };
     });
   }
 
-  // ---- 오늘 운동 비우기 ----
-  function clearToday() {
-    if (!todayEntries.length) return;
-    if (!confirm("오늘 운동을 전부 비울까?")) return;
-    todayEntries = [];
-    renderTodayTable();
-  }
-
-  // ---- 오늘 운동 완료 → 하루 단위 저장 ----
+  /* --- 오늘 운동 완료 --- */
   function finishDay() {
-    if (!todayEntries.length) {
-      alert("오늘 운동이 비어있어!");
-      return;
-    }
-    const date = dateInput.value || todayISO();
+    if (!todayEntries.length) return alert("오늘 운동이 비었습니다");
 
     saved.push({
-      date,
-      items: todayEntries,
-      time: Date.now()
+      date: dateInput.value,
+      items: todayEntries
     });
-
     saveAll();
+
     todayEntries = [];
     renderTodayTable();
     renderSavedTable();
+
     alert("저장 완료!");
   }
 
-  // ---- 저장된 기록 표 렌더링 ----
+  /* --- 저장 기록 렌더링 --- */
   function renderSavedTable() {
     if (!saved.length) {
-      logBody.innerHTML =
-        `<tr><td colspan="4" class="empty-row">저장된 기록 없음</td></tr>`;
+      logBody.innerHTML = `<tr><td colspan="4" class="empty-row">기록 없음</td></tr>`;
       return;
     }
 
-    const rows = [];
-    const sorted = [...saved].sort((a, b) =>
-      a.date < b.date ? 1 : -1
-    );
+    let rows = [];
 
-    sorted.forEach(session => {
-      session.items.forEach(e => {
-        let value = "-";
-        if (e.type === "weight") value = `${e.weight}kg`;
-        else if (e.type === "time") value = `${e.time}분`;
-        else if (e.type === "distance") value = `${e.dist}km / ${e.time}분`;
-        else if (e.type === "timeSet") value = `${e.time}분`;
+    [...saved].reverse().forEach(s => {
+      s.items.forEach(e => {
+        let v="-";
+        if (e.type === "weight") v = `${e.weight}kg`;
+        else if (e.type === "time") v = `${e.time}분`;
+        else if (e.type === "distance") v = `${e.dist}km / ${e.time}분`;
+        else if (e.type === "timeSet") v = `${e.time}분`;
 
-        let sr = "-";
+        let sr="-";
         if (e.sets && e.reps) sr = `${e.sets}×${e.reps}`;
         else if (e.sets) sr = `${e.sets}세트`;
         else if (e.reps) sr = `${e.reps}회`;
 
         rows.push(`
           <tr>
-            <td>${session.date}</td>
+            <td>${s.date}</td>
             <td>${e.ex}</td>
-            <td>${value}</td>
+            <td>${v}</td>
             <td>${sr}</td>
-          </tr>
-        `);
+          </tr>`);
       });
     });
 
@@ -519,6 +503,6 @@
 
   init();
 </script>
+
 </body>
 </html>
-
