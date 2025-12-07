@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>운동 기록</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 960px;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px 24px 28px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+      border: 1px solid #e5e7eb;
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0 0 4px;
+      color: #0f172a;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 18px;
+    }
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .date-field {
+      display: flex;
+      flex-direction: column;
+      font-size: 12px;
+      gap: 4px;
+    }
+    label {
+      color: #4b5563;
+      font-size: 12px;
+    }
+    input, select {
+      font-family: inherit;
+      font-size: 13px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      padding: 7px 9px;
+      background: #ffffff;
+      color: #111827;
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 18px 0 8px;
+      color: #111827;
+    }
+    .card {
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      padding: 12px 14px 14px;
+      margin-bottom: 12px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1.2fr;
+      gap: 10px 12px;
+      align-items: flex-end;
+    }
+    .field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+    .inline-group { display: flex; gap: 6px; }
+    .inline-group > * { flex: 1; }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: #eff6ff;
+      box-shadow: 0 9px 18px rgba(37, 99, 235, 0.35);
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-ghost {
+      background: transparent;
+      color: #6b7280;
+      border: 1px solid #d1d5db;
+    }
+    .btn-ghost:hover { background: #f3f4f6; }
+    .btn-secondary {
+      background: #e5edff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+    .btn-danger {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    .table-wrapper {
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      overflow: hidden;
+      background: #ffffff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    thead { background: #eff6ff; }
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+    .empty-row {
+      text-align: center;
+      color: #9ca3af;
+      padding: 16px 8px;
+      font-size: 12px;
+    }
+    .tag {
+      padding: 2px 8px;
+      font-size: 11px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="top-row">
+    <div>
+      <h1>운동 기록</h1>
+      <div class="subtitle">운동 입력 → 표 추가 → 오늘 운동 완료로 하루 단위 저장</div>
+    </div>
+    <div class="date-field">
+      <label for="dateInput">날짜</label>
+      <input type="date" id="dateInput" />
+    </div>
+  </div>
+
+  <!-- 입력 -->
+  <div class="section-title">오늘 운동 입력</div>
+  <div class="card">
+    <div class="form-grid">
+      <div class="field">
+        <label>운동 선택</label>
+        <select id="exerciseSelect">
+          <option value="스쿼트">스쿼트</option>
+          <option value="레그 익스텐션">레그 익스텐션</option>
+          <option value="라잉 레그컬">라잉 레그컬</option>
+          <option value="팩덱 플라이">팩덱 플라이</option>
+          <option value="크런치">크런치</option>
+          <option value="레그 레이즈">레그 레이즈</option>
+          <option value="플랭크">플랭크</option>
+          <option value="스텝밀">스텝밀</option>
+          <option value="인터벌 러닝">인터벌 러닝</option>
+        </select>
+      </div>
+
+      <div class="field" id="dynamicInputs"></div>
+    </div>
+
+    <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end;">
+      <button class="btn-ghost" id="clearCurrentBtn">입력 초기화</button>
+      <button class="btn-primary" id="addEntryBtn">완료 → 표에 추가</button>
+    </div>
+  </div>
+
+  <!-- 오늘 운동 -->
+  <div class="section-title" style="display:flex; align-items:center; gap:8px;">
+    오늘 운동 <span id="todayLabel" class="tag"></span>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+      <tr>
+        <th>운동</th>
+        <th>중량 / 시간</th>
+        <th>세트 × 횟수</th>
+        <th style="width:70px;">삭제</th>
+      </tr>
+      </thead>
+      <tbody id="todayBody">
+      <tr><td colspan="4" class="empty-row">아직 아무 운동도 추가되지 않았어요.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:10px; display:flex; justify-content:space-between;">
+    <button class="btn-secondary" id="clearTodayBtn">오늘 운동 비우기</button>
+    <button class="btn-primary" id="finishDayBtn">오늘 운동 완료</button>
+  </div>
+
+  <!-- 로그 -->
+  <div class="section-title" style="margin-top:24px;">저장된 운동 기록</div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+      <tr>
+        <th style="width:90px;">날짜</th>
+        <th>운동</th>
+        <th>중량 / 시간</th>
+        <th>세트×횟수</th>
+      </tr>
+      </thead>
+      <tbody id="logBody">
+      <tr><td colspan="4" class="empty-row">저장된 기록 없음</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = "workout_sessions_v2";
+
+  const CONFIG = {
+    "스쿼트": "weight",
+    "레그 익스텐션": "weight",
+    "라잉 레그컬": "weight",
+    "팩덱 플라이": "weight",
+    "크런치": "reps",
+    "레그 레이즈": "reps",
+    "플랭크": "time",
+    "스텝밀": "time",
+    "인터벌 러닝": "distance"
+  };
+
+  let todayEntries = [];
+  let saved = [];
+
+  const dateInput = document.getElementById("dateInput");
+  const todayLabel = document.getElementById("todayLabel");
+  const exerciseSelect = document.getElementById("exerciseSelect");
+  const dynamicInputs = document.getElementById("dynamicInputs");
+  const todayBody = document.getElementById("todayBody");
+  const logBody = document.getElementById("logBody");
+
+  function today() {
+    return new Date().toISOString().split("T")[0];
+  }
+
+  function init() {
+    dateInput.value = today();
+    todayLabel.textContent = dateInput.value;
+    load();
+    renderDynamic();
+    renderToday();
+  }
+
+  function load() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) saved = JSON.parse(raw);
+    renderSaved();
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+  }
+
+  // --- dynamic inputs ---
+  function renderDynamic() {
+    const type = CONFIG[exerciseSelect.value];
+
+    if (type === "weight") {
+      dynamicInputs.innerHTML = `
+        <label>중량 / 세트 / 횟수</label>
+        <div class="inline-group">
+          <input id="weight" type="number" placeholder="kg">
+          <input id="sets" type="number" placeholder="세트">
+          <input id="reps" type="number" placeholder="횟수">
+        </div>
+      `;
+    } else if (type === "reps") {
+      dynamicInputs.innerHTML = `
+        <label>세트 / 횟수</label>
+        <div class="inline-group">
+          <input id="sets" type="number" placeholder="세트">
+          <input id="reps" type="number" placeholder="횟수">
+        </div>
+      `;
+    } else if (type === "time") {
+      dynamicInputs.innerHTML = `
+        <label>시간 (분)</label>
+        <input id="time" type="number" placeholder="예: 20">
+      `;
+    } else if (type === "distance") {
+      dynamicInputs.innerHTML = `
+        <label>거리 / 시간</label>
+        <div class="inline-group">
+          <input id="distance" type="number" step="0.1" placeholder="km">
+          <input id="time" type="number" placeholder="분">
+        </div>
+      `;
+    }
+  }
+
+  // --- add entry ---
+  function addEntry() {
+    const type = CONFIG[exerciseSelect.value];
+
+    let weight = null, sets = null, reps = null, time = null, dist = null;
+
+    if (type === "weight") {
+      weight = Number(document.getElementById("weight").value);
+      sets = Number(document.getElementById("sets").value);
+      reps = Number(document.getElementById("reps").value);
+      if (!weight || !sets || !reps) return alert("중량/세트/횟수를 모두 입력해줘!");
+    } else if (type === "reps") {
+      sets = Number(document.getElementById("sets").value);
+      reps = Number(document.getElementById("reps").value);
+      if (!sets || !reps) return alert("세트/횟수를 모두 입력해줘!");
+    } else if (type === "time") {
+      time = Number(document.getElementById("time").value);
+      if (!time) return alert("시간(분)을 입력해줘!");
+    } else if (type === "distance") {
+      dist = Number(document.getElementById("distance").value);
+      time = Number(document.getElementById("time").value);
+      if (!dist || !time) return alert("거리/시간 모두 입력해줘!");
+    }
+
+    todayEntries.push({
+      id: Date.now(),
+      ex: exerciseSelect.value,
+      type, weight, sets, reps, time, dist
+    });
+
+    renderToday();
+    renderDynamic();
+  }
+
+  // --- render today ---
+  function renderToday() {
+    if (!todayEntries.length) {
+      todayBody.innerHTML =
+        `<tr><td colspan="4" class="empty-row">아직 아무 운동도 추가되지 않았어요.</td></tr>`;
+      return;
+    }
+
+    todayBody.innerHTML = todayEntries.map(e => {
+      let value = "-";
+      if (e.type === "weight") value = `${e.weight}kg`;
+      if (e.type === "time") value = `${e.time}분`;
+      if (e.type === "distance") value = `${e.dist}km / ${e.time}분`;
+
+      const sr = (e.sets && e.reps) ? `${e.sets}×${e.reps}` : "-";
+
+      return `
+        <tr>
+          <td>${e.ex}</td>
+          <td>${value}</td>
+          <td>${sr}</td>
+          <td><button class="btn-danger" data-id="${e.id}">삭제</button></td>
+        </tr>`;
+    }).join("");
+
+    document.querySelectorAll(".btn-danger[data-id]").forEach(btn => {
+      btn.onclick = () => {
+        const id = Number(btn.dataset.id);
+        todayEntries = todayEntries.filter(e => e.id !== id);
+        renderToday();
+      };
+    });
+  }
+
+  // --- clear today ---
+  function clearToday() {
+    if (!todayEntries.length) return;
+    if (!confirm("오늘 운동을 전부 비울까?")) return;
+    todayEntries = [];
+    renderToday();
+  }
+
+  // --- finish ---
+  function finishDay() {
+    if (!todayEntries.length) return alert("오늘 운동이 비어있어!");
+
+    saved.push({
+      date: dateInput.value,
+      items: todayEntries,
+      time: Date.now()
+    });
+
+    save();
+    todayEntries = [];
+    renderToday();
+    renderSaved();
+    alert("저장 완료!");
+  }
+
+  // --- render saved ---
+  function renderSaved() {
+    if (!saved.length) {
+      logBody.innerHTML =
+        `<tr><td colspan="4" class="empty-row">저장된 기록 없음</td></tr>`;
+      return;
+    }
+
+    const rows = [];
+    const sorted = [...saved].sort((a, b) =>
+      a.date < b.date ? 1 : -1
+    );
+
+    sorted.forEach(session => {
+      session.items.forEach(e => {
+        let value = "-";
+        if (e.type === "weight") value = `${e.weight}kg`;
+        if (e.type === "time") value = `${e.time}분`;
+        if (e.type === "distance") value = `${e.dist}km / ${e.time}분`;
+
+        const sr = (e.sets && e.reps) ? `${e.sets}×${e.reps}` : "-";
+
+        rows.push(`
+          <tr>
+            <td>${session.date}</td>
+            <td>${e.ex}</td>
+            <td>${value}</td>
+            <td>${sr}</td>
+          </tr>
+        `);
+      });
+    });
+
+    logBody.innerHTML = rows.join("");
+  }
+
+  // --- events ---
+  exerciseSelect.onchange = renderDynamic;
+  document.getElementById("addEntryBtn").onclick = addEntry;
+  document.getElementById("clearCurrentBtn").onclick = renderDynamic;
+  document.getElementById("clearTodayBtn").onclick = clearToday;
+  document.getElementById("finishDayBtn").onclick = finishDay;
+
+  init();
+</script>
+
+</body>
+</html>
