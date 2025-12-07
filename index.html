@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workout Log</title>
+    <title>Workout Log</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
+
 
   <style>
     *{box-sizing:border-box}
@@ -454,7 +457,11 @@ document.getElementById("clearCurrentBtn").onclick=()=>{
 };
 document.getElementById("clearTodayBtn").onclick=()=>{todayEntries=[];renderToday()};
 document.getElementById("finishDayBtn").onclick=finishDay;
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js");
+}
 </script>
 
 </body>
 </html>
+
