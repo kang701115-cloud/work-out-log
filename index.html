@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>workout log</title>
+  <title>운동 기록 - 안정 저장 버전</title>
 
   <style>
     *{box-sizing:border-box}
@@ -95,8 +95,8 @@
 <body>
 <div class="container">
 
-  <h1>workout log</h1>
-  <div class="subtitle"></div>
+  <h1>운동 기록</h1>
+  <div class="subtitle">모바일 최적화 + 그룹화 + 영구 저장</div>
 
   <label>날짜</label>
   <input type="date" id="dateInput" style="margin-bottom:14px">
@@ -143,7 +143,6 @@
   <div class="section-title" style="margin-top:24px">저장된 운동 기록</div>
   <div id="logAccordion" style="display:flex;flex-direction:column;gap:12px;"></div>
 
-  <!-- 백업/복원 버튼 -->
   <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;">
     <button class="btn-ghost" onclick="downloadBackup()">💾 기록 백업 (JSON 저장)</button>
     <input type="file" id="fileInput" style="display:none" accept=".json">
@@ -153,28 +152,23 @@
 </div>
 
 <script>
-  /* -----------------------------
-     저장 관련 핵심: 절대 안 날아가게 만드는 버전
-  ------------------------------*/
+  const STORAGE_KEY = "workout_log_data";
 
-  const STORAGE_KEY = "workout_log_data";  // 고정 (변경 금지)
-
+  /* 운동 타입 정의 */
   const CONFIG={
     "스쿼트":"weight",
     "레그 익스텐션":"weight",
     "라잉 레그컬":"weight",
     "팩덱 플라이":"weight",
-    "크런치":"reps",
-    "레그 레이즈":"reps",
-    "플랭크":"timeSet",
+    "크런치":"repsOnly",        // 중량 제거
+    "레그 레이즈":"repsOnly",
+    "플랭크":"seconds",         // 초 단위
     "스텝밀":"time",
-    "인터벌 러닝":"distance"
+    "인터벌 러닝":"distanceOnly"  // 거리만
   };
 
   let todayEntries=[];
   let saved=[];
-
-  function todayISO(){return new Date().toISOString().split("T")[0]}
 
   const dateInput=document.getElementById("dateInput");
   const dynamicInputs=document.getElementById("dynamicInputs");
@@ -182,91 +176,69 @@
   const todayArea=document.getElementById("todayArea");
   const logAccordion=document.getElementById("logAccordion");
 
-  /* -----------------------------
-     로컬 저장 불러오기 + 자동 구조 변환
-  ------------------------------*/
+  function todayISO(){return new Date().toISOString().split("T")[0]}
+
+  /* 로딩 + 구조 변환 */
   function loadSaved(){
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw=localStorage.getItem(STORAGE_KEY);
     if(!raw){ saved=[]; return; }
 
     try{
-      const data = JSON.parse(raw);
-
-      // 🔥 예전 구조 감지 → 새 구조로 자동 변환
-      if (Array.isArray(data) && data.length && data[0].entries) {
-        saved = data.map(s => ({
-          date: s.date,
-          items: s.entries
-        }));
+      const data=JSON.parse(raw);
+      if(Array.isArray(data)&&data.length&&data[0].entries){
+        saved=data.map(s=>({date:s.date,items:s.entries}));
         saveAll();
-      }
-      else {
-        saved = data;
-      }
-
-    }catch(e){
-      saved=[];
-    }
+      } else saved=data;
+    }catch(e){ saved=[]; }
   }
-
   function saveAll(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(saved));
   }
 
-  /* -----------------------------
-     입력 UI 렌더링
-  ------------------------------*/
+  /* 입력 UI */
   function renderDynamicInputs(){
     const type=CONFIG[exerciseSelect.value];
 
     if(type==="weight"){
       dynamicInputs.innerHTML=`
-        <label>중량 / 세트 / 횟수</label>
-        <div class="inline-group">
-          <input id="weight" type="number" placeholder="kg">
-          <input id="sets" type="number" placeholder="세트">
-          <input id="reps" type="number" placeholder="횟수">
-        </div>`;
+      <label>중량 / 세트 / 횟수</label>
+      <div class="inline-group">
+        <input id="weight" type="number" placeholder="kg">
+        <input id="sets" type="number" placeholder="세트">
+        <input id="reps" type="number" placeholder="횟수">
+      </div>`;
     }
-    else if(type==="reps"){
+    else if(type==="repsOnly"){
       dynamicInputs.innerHTML=`
-        <label>세트 / 횟수</label>
-        <div class="inline-group">
-          <input id="sets" type="number" placeholder="세트">
-          <input id="reps" type="number" placeholder="횟수">
-        </div>`;
+      <label>세트 / 횟수</label>
+      <div class="inline-group">
+        <input id="sets" type="number" placeholder="세트">
+        <input id="reps" type="number" placeholder="횟수">
+      </div>`;
+    }
+    else if(type==="seconds"){
+      dynamicInputs.innerHTML=`
+      <label>시간(초)</label>
+      <input id="seconds" type="number" placeholder="초">`;
     }
     else if(type==="time"){
       dynamicInputs.innerHTML=`
-        <label>시간(분)</label>
-        <input id="time" type="number" placeholder="분">`;
+      <label>시간(분)</label>
+      <input id="time" type="number" placeholder="분">`;
     }
-    else if(type==="distance"){
+    else if(type==="distanceOnly"){
       dynamicInputs.innerHTML=`
-        <label>거리 / 시간</label>
-        <div class="inline-group">
-          <input id="distance" type="number" step="0.1" placeholder="km">
-          <input id="time" type="number" placeholder="분">
-        </div>`;
-    }
-    else if(type==="timeSet"){
-      dynamicInputs.innerHTML=`
-        <label>세트 / 시간(분)</label>
-        <div class="inline-group">
-          <input id="sets" type="number" placeholder="세트">
-          <input id="time" type="number" placeholder="분">
-        </div>`;
+      <label>거리 (km)</label>
+      <input id="distance" type="number" step="0.1" placeholder="km">`;
     }
   }
 
-  /* -----------------------------
-     오늘 운동 추가
-  ------------------------------*/
+  /* 오늘 운동 추가 */
   function addEntry(){
-    const ex = exerciseSelect.value;
-    const type = CONFIG[ex];
+    const ex=exerciseSelect.value;
+    const type=CONFIG[ex];
 
-    let weight=null,sets=null,reps=null,time=null,dist=null;
+    let weight=null,sets=null,reps=null,time=null,dist=null,seconds=null;
 
     if(type==="weight"){
       weight=+document.getElementById("weight").value;
@@ -274,27 +246,25 @@
       reps=+document.getElementById("reps").value;
       if(!weight||!sets||!reps)return alert("중량/세트/횟수 입력");
     }
-    else if(type==="reps"){
+    else if(type==="repsOnly"){
       sets=+document.getElementById("sets").value;
       reps=+document.getElementById("reps").value;
       if(!sets||!reps)return alert("세트/횟수 입력");
     }
+    else if(type==="seconds"){
+      seconds=+document.getElementById("seconds").value;
+      if(!seconds)return alert("초 입력 필요");
+    }
     else if(type==="time"){
       time=+document.getElementById("time").value;
-      if(!time)return alert("시간 입력");
+      if(!time)return alert("시간 입력 필요");
     }
-    else if(type==="distance"){
+    else if(type==="distanceOnly"){
       dist=+document.getElementById("distance").value;
-      time=+document.getElementById("time").value;
-      if(!dist||!time)return alert("거리/시간 입력");
-    }
-    else if(type==="timeSet"){
-      sets=+document.getElementById("sets").value;
-      time=+document.getElementById("time").value;
-      if(!sets||!time)return alert("세트/시간 입력");
+      if(!dist)return alert("거리 입력 필요");
     }
 
-    todayEntries.push({ ex,type,weight,sets,reps,time,dist });
+    todayEntries.push({ ex,type,weight,sets,reps,time,dist,seconds });
     renderToday();
     renderDynamicInputs();
   }
@@ -308,23 +278,23 @@
 
     todayArea.innerHTML=todayEntries.map(e=>{
       let v="-";
-      if(e.type==="weight")v=`${e.weight}kg`;
-      else if(e.type==="time")v=`${e.time}분`;
-      else if(e.type==="distance")v=`${e.dist}km / ${e.time}분`;
-      else if(e.type==="timeSet")v=`${e.time}분`;
+
+      if(e.type==="weight") v=`${e.weight}kg`;
+      else if(e.type==="time") v=`${e.time}분`;
+      else if(e.type==="distanceOnly") v=`${e.dist}km`;
+      else if(e.type==="seconds") v=`${e.seconds}초`;
+      else v="-";
 
       let sr="-";
-      if(e.sets&&e.reps)sr=`${e.sets}×${e.reps}`;
-      else if(e.sets)sr=`${e.sets}세트`;
-      else if(e.reps)sr=`${e.reps}회`;
+      if(e.sets&&e.reps) sr=`${e.sets}×${e.reps}`;
+      else if(e.sets) sr=`${e.sets}세트`;
+      else if(e.reps) sr=`${e.reps}회`;
 
       return `<div>${e.ex} — ${v} — ${sr}</div>`;
     }).join("");
   }
 
-  /* -----------------------------
-     저장 (영구)
-  ------------------------------*/
+  /* 저장 */
   function finishDay(){
     if(!todayEntries.length)return alert("오늘 운동 없음");
 
@@ -340,9 +310,7 @@
     alert("저장 완료!");
   }
 
-  /* -----------------------------
-     날짜별 그룹화 + 아코디언 렌더링
-  ------------------------------*/
+  /* 저장된 기록 렌더링 */
   function renderSaved(){
     logAccordion.innerHTML="";
 
@@ -361,7 +329,6 @@
       const content=document.createElement("div");
       content.className="accordion-content";
 
-      /* 그룹화 */
       const groups={};
       session.items.forEach(e=>{
         if(!groups[e.ex])groups[e.ex]=[];
@@ -379,15 +346,15 @@
 
         groups[name].forEach(e=>{
           let v="-";
-          if(e.type==="weight")v=`${e.weight}kg`;
-          else if(e.type==="time")v=`${e.time}분`;
-          else if(e.type==="distance")v=`${e.dist}km / ${e.time}분`;
-          else if(e.type==="timeSet")v=`${e.time}분`;
+          if(e.type==="weight") v=`${e.weight}kg`;
+          else if(e.type==="time") v=`${e.time}분`;
+          else if(e.type==="distanceOnly") v=`${e.dist}km`;
+          else if(e.type==="seconds") v=`${e.seconds}초`;
 
           let sr="-";
-          if(e.sets&&e.reps)sr=`${e.sets}×${e.reps}`;
-          else if(e.sets)sr=`${e.sets}세트`;
-          else if(e.reps)sr=`${e.reps}회`;
+          if(e.sets&&e.reps) sr=`${e.sets}×${e.reps}`;
+          else if(e.sets) sr=`${e.sets}세트`;
+          else if(e.reps) sr=`${e.reps}회`;
 
           const line=document.createElement("div");
           line.className="exercise-line";
@@ -409,9 +376,7 @@
     });
   }
 
-  /* -----------------------------
-     JSON 백업 / 복원
-  ------------------------------*/
+  /* 백업 기능 */
   function downloadBackup(){
     const blob=new Blob([JSON.stringify(saved,null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob);
@@ -422,7 +387,6 @@
     a.click();
     URL.revokeObjectURL(url);
   }
-
   function uploadBackup(){
     document.getElementById("fileInput").click();
 
@@ -434,9 +398,7 @@
       reader.onload=(ev)=>{
         try{
           const data=JSON.parse(ev.target.result);
-
-          if(!Array.isArray(data)) return alert("잘못된 백업 파일");
-
+          if(!Array.isArray(data))return alert("백업 파일 오류");
           saved=data;
           saveAll();
           renderSaved();
@@ -449,9 +411,7 @@
     };
   }
 
-  /* ----------------------------- */
   /* 초기 실행 */
-  /* ----------------------------- */
   dateInput.value=todayISO();
   loadSaved();
   renderDynamicInputs();
@@ -462,9 +422,7 @@
   document.getElementById("clearCurrentBtn").onclick=renderDynamicInputs;
   document.getElementById("clearTodayBtn").onclick=()=>{todayEntries=[];renderToday()};
   document.getElementById("finishDayBtn").onclick=finishDay;
-
 </script>
+
 </body>
 </html>
-
-
