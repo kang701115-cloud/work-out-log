@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>workout Log</title>
+  <title>Workout Log</title>
 
   <style>
     *{box-sizing:border-box}
@@ -22,7 +22,6 @@
     }
     h1{margin:0;color:#111827;font-size:22px}
 
-    /* label, inputs */
     label{font-size:12px;color:#374151}
     input,select{
       width:100%;border-radius:10px;
@@ -35,7 +34,6 @@
       outline:none;
     }
 
-    /* layout */
     .section-title{margin-top:20px;margin-bottom:6px;font-weight:600}
     .card{
       background:#f9fafb;border:1px solid #e5e7eb;
@@ -47,7 +45,6 @@
     }
     .inline-group{display:flex;gap:6px}
 
-    /* buttons */
     button{
       border:none;border-radius:10px;
       padding:10px;font-size:14px;
@@ -57,7 +54,6 @@
     .btn-primary:hover{background:#1d4ed8}
     .btn-ghost{background:#f9fafb;border:1px solid #d1d5db}
 
-    /* edit button */
     .edit-btn{
       color:#2563eb;
       font-size:12px;
@@ -65,7 +61,6 @@
       margin-left:8px;
     }
 
-    /* accordion */
     .accordion-date{
       padding:10px 14px;background:#eef2ff;
       border:1px solid #c7d2fe;border-radius:10px;
@@ -109,7 +104,6 @@
   <label>날짜</label>
   <input type="date" id="dateInput" style="margin-bottom:14px">
 
-  <!-- 입력 -->
   <div class="section-title">오늘 운동 입력</div>
   <div class="card">
     <div class="form-grid">
@@ -136,7 +130,6 @@
     </div>
   </div>
 
-  <!-- 오늘 운동 -->
   <div class="section-title">오늘 운동</div>
   <div id="todayArea" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px;min-height:46px;font-size:14px;color:#374151">
     아직 추가된 운동 없음
@@ -147,7 +140,6 @@
     <button class="btn-primary" id="finishDayBtn">오늘 운동 저장</button>
   </div>
 
-  <!-- 저장된 기록 -->
   <div class="section-title" style="margin-top:24px">저장된 운동 기록</div>
   <div id="logAccordion" style="display:flex;flex-direction:column;gap:12px;"></div>
 
@@ -163,16 +155,15 @@ const CONFIG={
   "팩덱 플라이":"weight",
   "크런치":"repsOnly",
   "레그 레이즈":"repsOnly",
-  "플랭크":"seconds",
+  "플랭크":"plank",
   "스텝밀":"time",
   "인터벌 러닝":"distanceOnly"
 };
 
 let todayEntries=[];
 let saved=[];
-let editTarget=null;   // ⭐ 수정 대상 저장 {dateIndex, itemIndex}
+let editTarget=null;
 
-/* 날짜 기본값 */
 function todayISO(){return new Date().toISOString().split("T")[0]}
 document.getElementById("dateInput").value=todayISO();
 
@@ -182,7 +173,6 @@ const exerciseSelect=document.getElementById("exerciseSelect");
 const todayArea=document.getElementById("todayArea");
 const logAccordion=document.getElementById("logAccordion");
 
-/* 저장 로딩 */
 function loadSaved(){
   const raw=localStorage.getItem(STORAGE_KEY);
   if(!raw){saved=[];return;}
@@ -194,11 +184,8 @@ function loadSaved(){
     }else saved=data;
   }catch(e){saved=[];}
 }
-function saveAll(){
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(saved));
-}
+function saveAll(){localStorage.setItem(STORAGE_KEY,JSON.stringify(saved));}
 
-/* 동적 입력창 */
 function renderDynamicInputs(){
   const type=CONFIG[exerciseSelect.value];
 
@@ -219,6 +206,14 @@ function renderDynamicInputs(){
         <input id="reps" type="number" placeholder="횟수">
       </div>`;
   }
+  else if(type==="plank"){
+    dynamicInputs.innerHTML=`
+      <label>세트 / 시간(초)</label>
+      <div class="inline-group">
+        <input id="sets" type="number" placeholder="세트">
+        <input id="seconds" type="number" placeholder="초">
+      </div>`;
+  }
   else if(type==="seconds"){
     dynamicInputs.innerHTML=`
       <label>시간(초)</label>
@@ -236,7 +231,6 @@ function renderDynamicInputs(){
   }
 }
 
-/* 오늘 운동 추가 또는 수정 */
 function addEntry(){
   const ex=exerciseSelect.value;
   const type=CONFIG[ex];
@@ -254,6 +248,11 @@ function addEntry(){
     reps=+document.getElementById("reps").value;
     if(!sets||!reps)return alert("세트/횟수 입력");
   }
+  else if(type==="plank"){
+    sets=+document.getElementById("sets").value;
+    seconds=+document.getElementById("seconds").value;
+    if(!sets||!seconds)return alert("세트/초 입력 필요");
+  }
   else if(type==="seconds"){
     seconds=+document.getElementById("seconds").value;
     if(!seconds)return alert("초 입력 필요");
@@ -269,7 +268,6 @@ function addEntry(){
 
   const newEntry={ex,type,weight,sets,reps,time,dist,seconds};
 
-  /* ⭐ 수정 모드일 때 */
   if(editTarget){
     const d=editTarget.dateIndex;
     const i=editTarget.itemIndex;
@@ -283,13 +281,11 @@ function addEntry(){
     return;
   }
 
-  /* 신규 추가 */
   todayEntries.push(newEntry);
   renderToday();
   renderDynamicInputs();
 }
 
-/* 오늘 운동 표시 */
 function renderToday(){
   if(!todayEntries.length){
     todayArea.textContent="아직 추가된 운동 없음";
@@ -301,12 +297,16 @@ function renderToday(){
     if(e.type==="weight") v=`${e.weight}kg`;
     else if(e.type==="time") v=`${e.time}분`;
     else if(e.type==="distanceOnly") v=`${e.dist}km`;
-    else if(e.type==="seconds") v=`${e.seconds}초`;
 
     let sr=null;
-    if(e.sets&&e.reps) sr=`${e.sets}×${e.reps}`;
-    else if(e.sets) sr=`${e.sets}세트`;
-    else if(e.reps) sr=`${e.reps}회`;
+    if(e.type==="plank"){
+      sr=`${e.sets}×${e.seconds}초`;
+    }
+    else{
+      if(e.sets&&e.reps) sr=`${e.sets}×${e.reps}`;
+      else if(e.sets) sr=`${e.sets}세트`;
+      else if(e.reps) sr=`${e.reps}회`;
+    }
 
     let display=`${e.ex} — `;
     if(v) display+=`${v} `;
@@ -316,9 +316,8 @@ function renderToday(){
   }).join("");
 }
 
-/* 날짜 병합 저장 */
 function finishDay(){
-  if(!todayEntries.length) return alert("오늘 운동 없음");
+  if(!todayEntries.length)return alert("오늘 운동 없음");
 
   const date=dateInput.value;
   const existing=saved.find(s=>s.date===date);
@@ -328,15 +327,14 @@ function finishDay(){
   } else {
     saved.push({date:date,items:[...todayEntries]});
   }
-
   saveAll();
+
   todayEntries=[];
   renderToday();
   renderSaved();
   alert("저장 완료!");
 }
 
-/* 저장된 로그 */
 function renderSaved(){
   logAccordion.innerHTML="";
 
@@ -357,7 +355,7 @@ function renderSaved(){
 
     const groups={};
     session.items.forEach((e,ii)=>{
-      if(!groups[e.ex]) groups[e.ex]=[];
+      if(!groups[e.ex])groups[e.ex]=[];
       groups[e.ex].push({...e,index:ii});
     });
 
@@ -375,14 +373,18 @@ function renderSaved(){
         if(e.type==="weight") v=`${e.weight}kg`;
         else if(e.type==="time") v=`${e.time}분`;
         else if(e.type==="distanceOnly") v=`${e.dist}km`;
-        else if(e.type==="seconds") v=`${e.seconds}초`;
 
         let sr=null;
-        if(e.sets&&e.reps) sr=`${e.sets}×${e.reps}`;
-        else if(e.sets) sr=`${e.sets}세트`;
-        else if(e.reps) sr=`${e.reps}회`;
+        if(e.type==="plank"){
+          sr=`${e.sets}×${e.seconds}초`;
+        }
+        else{
+          if(e.sets&&e.reps) sr=`${e.sets}×${e.reps}`;
+          else if(e.sets) sr=`${e.sets}세트`;
+          else if(e.reps) sr=`${e.reps}회`;
+        }
 
-        let display=`• `;
+        let display="• ";
         if(v) display+=`${v} `;
         if(sr) display+=`${sr}`;
 
@@ -409,14 +411,12 @@ function renderSaved(){
   });
 }
 
-/* ⭐ 수정 기능 핵심 */
 function editEntry(dateIndex,itemIndex){
   const e=saved[dateIndex].items[itemIndex];
 
   exerciseSelect.value=e.ex;
   renderDynamicInputs();
 
-  /* 값 입력창에 채워넣기 */
   if(e.type==="weight"){
     document.getElementById("weight").value=e.weight;
     document.getElementById("sets").value=e.sets;
@@ -426,7 +426,8 @@ function editEntry(dateIndex,itemIndex){
     document.getElementById("sets").value=e.sets;
     document.getElementById("reps").value=e.reps;
   }
-  else if(e.type==="seconds"){
+  else if(e.type==="plank"){
+    document.getElementById("sets").value=e.sets;
     document.getElementById("seconds").value=e.seconds;
   }
   else if(e.type==="time"){
@@ -440,7 +441,6 @@ function editEntry(dateIndex,itemIndex){
   document.getElementById("addEntryBtn").textContent="수정 저장";
 }
 
-/* 초기 실행 */
 loadSaved();
 renderDynamicInputs();
 renderSaved();
