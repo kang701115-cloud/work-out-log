@@ -3,10 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>workout Log</title>
+  <title>Workout Log</title>
+
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2563eb">
 
+  <!-- Firebase (CDN, compat 버전 사용) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 
   <style>
     *{box-sizing:border-box}
@@ -91,6 +96,38 @@
       align-items:center;justify-content:space-between;
     }
 
+    /* 사용자 선택 바 */
+    .user-bar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin:8px 0 16px;
+      padding:8px 10px;
+      border-radius:10px;
+      background:#eff6ff;
+      border:1px solid #bfdbfe;
+      font-size:13px;
+      color:#1e40af;
+    }
+    .user-buttons{
+      display:flex;
+      gap:6px;
+    }
+    .btn-small{
+      padding:6px 10px;
+      font-size:12px;
+      border-radius:999px;
+      border:1px solid #2563eb;
+      background:#ffffff;
+      color:#2563eb;
+      cursor:pointer;
+      width:auto;
+    }
+    .btn-small.active{
+      background:#2563eb;
+      color:#ffffff;
+    }
+
     @media(max-width:480px){
       .form-grid{grid-template-columns:1fr}
       .inline-group{flex-direction:column}
@@ -101,8 +138,16 @@
 
 <body>
 <div class="container">
-
   <h1>Workout Log</h1>
+
+  <!-- 사용자 선택 영역 -->
+  <div class="user-bar">
+    <span>현재 사용자: <strong id="currentUserLabel">선택 안 됨</strong></span>
+    <div class="user-buttons">
+      <button type="button" id="btnYou" class="btn-small" onclick="setUser('you')">나</button>
+      <button type="button" id="btnDad" class="btn-small" onclick="setUser('dad')">아버지</button>
+    </div>
+  </div>
 
   <label>날짜</label>
   <input type="date" id="dateInput" style="margin-bottom:14px">
@@ -149,8 +194,21 @@
 </div>
 
 <script>
-const STORAGE_KEY = "workout_log_data";
+/* ------------------ Firebase 초기화 ------------------ */
+const firebaseConfig = {
+  apiKey: "AIzaSyC3ujrY9fswr13fr0ta1mZMrT2xD038TF4",
+  authDomain: "workout-log-80266.firebaseapp.com",
+  projectId: "workout-log-80266",
+  storageBucket: "workout-log-80266.firebasestorage.app",
+  messagingSenderId: "847022739134",
+  appId: "1:847022739134:web:2cddcd6f0654b69a8098ef",
+  databaseURL: "https://workout-log-80266-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
 
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ------------------ 앱 로직 ------------------ */
 const CONFIG={
   "스쿼트":"weight",
   "레그 익스텐션":"weight",
@@ -163,32 +221,112 @@ const CONFIG={
   "인터벌 러닝":"distanceOnly"
 };
 
+const STORAGE_KEY_BASE="workout_log_data_";
+const USER_KEY="workout_log_user";
+
+let currentUser=null;
 let todayEntries=[];
 let saved=[];
 let editTarget=null;
 
 function todayISO(){return new Date().toISOString().split("T")[0]}
-document.getElementById("dateInput").value=todayISO();
 
 const dateInput=document.getElementById("dateInput");
 const dynamicInputs=document.getElementById("dynamicInputs");
 const exerciseSelect=document.getElementById("exerciseSelect");
 const todayArea=document.getElementById("todayArea");
 const logAccordion=document.getElementById("logAccordion");
+const currentUserLabel=document.getElementById("currentUserLabel");
+const btnYou=document.getElementById("btnYou");
+const btnDad=document.getElementById("btnDad");
 
-function loadSaved(){
-  const raw=localStorage.getItem(STORAGE_KEY);
+dateInput.value=todayISO();
+
+function getStorageKey(){
+  const u=currentUser || "default";
+  return STORAGE_KEY_BASE + u;
+}
+
+/* --- 사용자 선택 UI --- */
+function updateUserUI(){
+  btnYou.classList.remove("active");
+  btnDad.classList.remove("active");
+
+  if(!currentUser){
+    currentUserLabel.textContent="선택 안 됨";
+  }else if(currentUser==="you"){
+    currentUserLabel.textContent="나";
+    btnYou.classList.add("active");
+  }else if(currentUser==="dad"){
+    currentUserLabel.textContent="아버지";
+    btnDad.classList.add("active");
+  }
+}
+
+function setUser(u){
+  currentUser=u;
+  localStorage.setItem(USER_KEY,u);
+  todayEntries=[];
+  saved=[];
+  editTarget=null;
+  updateUserUI();
+  loadSavedLocal();
+  renderToday();
+  renderSaved();
+  if(currentUser){
+    loadFromCloud().then(renderSaved).catch(console.error);
+  }
+}
+
+/* --- 로컬 저장/로드 --- */
+function loadSavedLocal(){
+  const raw=localStorage.getItem(getStorageKey());
   if(!raw){saved=[];return;}
   try{
     const data=JSON.parse(raw);
     if(Array.isArray(data)&&data.length&&data[0].entries){
       saved=data.map(s=>({date:s.date,items:s.entries}));
-      saveAll();
-    }else saved=data;
-  }catch(e){saved=[];}
+      saveAllLocal();
+    }else{
+      saved=data;
+    }
+  }catch(e){
+    console.error(e);
+    saved=[];
+  }
 }
-function saveAll(){localStorage.setItem(STORAGE_KEY,JSON.stringify(saved));}
 
+function saveAllLocal(){
+  localStorage.setItem(getStorageKey(),JSON.stringify(saved));
+}
+
+/* --- 클라우드 연동 --- */
+async function loadFromCloud(){
+  if(!currentUser) return;
+  try{
+    const snap=await db.ref("workouts/"+currentUser).once("value");
+    if(snap.exists()){
+      const data=snap.val();
+      if(Array.isArray(data)){
+        saved=data;
+        saveAllLocal();
+      }
+    }
+  }catch(e){
+    console.error("loadFromCloud error",e);
+  }
+}
+
+async function saveToCloud(){
+  if(!currentUser) return;
+  try{
+    await db.ref("workouts/"+currentUser).set(saved);
+  }catch(e){
+    console.error("saveToCloud error",e);
+  }
+}
+
+/* --- 입력 필드 렌더링 --- */
 function renderDynamicInputs(){
   const type=CONFIG[exerciseSelect.value];
 
@@ -216,11 +354,6 @@ function renderDynamicInputs(){
         <input id="sets" type="number" placeholder="세트">
         <input id="seconds" type="number" placeholder="초">
       </div>`;
-  }
-  else if(type==="seconds"){
-    dynamicInputs.innerHTML=`
-      <label>시간(초)</label>
-      <input id="seconds" type="number" placeholder="초">`;
   }
   else if(type==="time"){
     dynamicInputs.innerHTML=`
@@ -256,10 +389,6 @@ function addEntry(){
     seconds=+document.getElementById("seconds").value;
     if(!sets||!seconds)return alert("세트/초 입력 필요");
   }
-  else if(type==="seconds"){
-    seconds=+document.getElementById("seconds").value;
-    if(!seconds)return alert("초 입력 필요");
-  }
   else if(type==="time"){
     time=+document.getElementById("time").value;
     if(!time)return alert("시간 입력 필요");
@@ -275,7 +404,8 @@ function addEntry(){
     const d=editTarget.dateIndex;
     const i=editTarget.itemIndex;
     saved[d].items[i]=newEntry;
-    saveAll();
+    saveAllLocal();
+    saveToCloud();
     editTarget=null;
     document.getElementById("addEntryBtn").textContent="표에 추가";
     renderDynamicInputs();
@@ -304,8 +434,7 @@ function renderToday(){
     let sr=null;
     if(e.type==="plank"){
       sr=`${e.sets}×${e.seconds}초`;
-    }
-    else{
+    }else{
       if(e.sets&&e.reps) sr=`${e.sets}×${e.reps}`;
       else if(e.sets) sr=`${e.sets}세트`;
       else if(e.reps) sr=`${e.reps}회`;
@@ -321,6 +450,7 @@ function renderToday(){
 
 function finishDay(){
   if(!todayEntries.length)return alert("오늘 운동 없음");
+  if(!currentUser)return alert("먼저 상단에서 사용자를 선택해 주세요.");
 
   const date=dateInput.value;
   const existing=saved.find(s=>s.date===date);
@@ -330,7 +460,9 @@ function finishDay(){
   } else {
     saved.push({date:date,items:[...todayEntries]});
   }
-  saveAll();
+
+  saveAllLocal();
+  saveToCloud();
 
   todayEntries=[];
   renderToday();
@@ -380,8 +512,7 @@ function renderSaved(){
         let sr=null;
         if(e.type==="plank"){
           sr=`${e.sets}×${e.seconds}초`;
-        }
-        else{
+        }else{
           if(e.sets&&e.reps) sr=`${e.sets}×${e.reps}`;
           else if(e.sets) sr=`${e.sets}세트`;
           else if(e.reps) sr=`${e.reps}회`;
@@ -444,9 +575,17 @@ function editEntry(dateIndex,itemIndex){
   document.getElementById("addEntryBtn").textContent="수정 저장";
 }
 
-loadSaved();
-renderDynamicInputs();
-renderSaved();
+/* 초기화 */
+function init(){
+  currentUser=localStorage.getItem(USER_KEY) || null;
+  updateUserUI();
+  loadSavedLocal();
+  renderDynamicInputs();
+  renderSaved();
+  if(currentUser){
+    loadFromCloud().then(renderSaved).catch(console.error);
+  }
+}
 
 exerciseSelect.onchange=renderDynamicInputs;
 document.getElementById("addEntryBtn").onclick=addEntry;
@@ -457,6 +596,10 @@ document.getElementById("clearCurrentBtn").onclick=()=>{
 };
 document.getElementById("clearTodayBtn").onclick=()=>{todayEntries=[];renderToday()};
 document.getElementById("finishDayBtn").onclick=finishDay;
+
+init();
+
+/* Service Worker (PWA) */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/service-worker.js");
 }
@@ -464,5 +607,3 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
-
-
