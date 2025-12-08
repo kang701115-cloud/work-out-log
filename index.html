@@ -178,6 +178,48 @@
     </div>
   </div>
 
+  <!-- 직접 운동 추가 -->
+  <div class="section-title" style="margin-top:16px">직접 운동 추가</div>
+  <div class="card">
+    <div>
+      <label>운동 이름</label>
+      <input id="customName" type="text" placeholder="예: 데드리프트 / 사이클 / 버피 등">
+    </div>
+
+    <div style="margin-top:10px;">
+      <label>중량 (kg)</label>
+      <input id="customWeight" type="number" placeholder="중량 (선택)">
+    </div>
+
+    <div style="margin-top:10px;">
+      <label>세트 / 횟수</label>
+      <div class="inline-group">
+        <input id="customSets" type="number" placeholder="세트">
+        <input id="customReps" type="number" placeholder="횟수">
+      </div>
+    </div>
+
+    <div style="margin-top:10px;">
+      <label>거리 (km)</label>
+      <input id="customDist" type="number" step="0.1" placeholder="거리 (선택)">
+    </div>
+
+    <div style="margin-top:10px;">
+      <label>시간</label>
+      <div class="inline-group">
+        <input id="customTime" type="number" placeholder="시간 값">
+        <select id="customTimeUnit">
+          <option value="sec">초</option>
+          <option value="min">분</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-primary" style="margin-top:12px" onclick="addCustomExercise()">
+      직접 입력 운동 추가
+    </button>
+  </div>
+
   <div class="section-title">오늘 운동</div>
   <div id="todayArea" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px;min-height:46px;font-size:14px;color:#374151">
     아직 추가된 운동 없음
@@ -213,9 +255,10 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* ------------------ 백업 / 복원 ------------------ */
+/* ------------------ 공통 함수 ------------------ */
 function todayISO(){return new Date().toISOString().split("T")[0]}
 
+/* ------------------ 백업 / 복원 ------------------ */
 function backupData(){
   if(!currentUser){
     alert("먼저 '강규민' 또는 '아빠'를 선택하세요.");
@@ -247,7 +290,6 @@ document.getElementById("restoreInput").addEventListener("change",function(e){
   reader.onload=async function(ev){
     try{
       const data=JSON.parse(ev.target.result);
-
       const nameMap={you:"강규민",dad:"아빠"};
 
       if(data.user!==currentUser){
@@ -422,6 +464,7 @@ function renderDynamicInputs(){
   }
 }
 
+/* 기본 운동 추가 */
 function addEntry(){
   const ex=exerciseSelect.value;
   const type=CONFIG[ex];
@@ -473,6 +516,49 @@ function addEntry(){
   renderDynamicInputs();
 }
 
+/* 직접 운동 추가 */
+function addCustomExercise(){
+  const name=document.getElementById("customName").value.trim();
+  if(!name){
+    alert("운동 이름을 입력하세요.");
+    return;
+  }
+
+  const weightVal=document.getElementById("customWeight").value;
+  const setsVal=document.getElementById("customSets").value;
+  const repsVal=document.getElementById("customReps").value;
+  const distVal=document.getElementById("customDist").value;
+  const timeVal=document.getElementById("customTime").value;
+  const timeUnit=document.getElementById("customTimeUnit").value;
+
+  let timeLabel=null;
+  if(timeVal){
+    if(timeUnit==="sec") timeLabel=`${timeVal}초`;
+    else timeLabel=`${timeVal}분`;
+  }
+
+  const newEntry={
+    ex:name,
+    type:"custom",
+    weight:weightVal?+weightVal:null,
+    sets:setsVal?+setsVal:null,
+    reps:repsVal?+repsVal:null,
+    dist:distVal?+distVal:null,
+    timeLabel:timeLabel
+  };
+
+  todayEntries.push(newEntry);
+  renderToday();
+
+  document.getElementById("customName").value="";
+  document.getElementById("customWeight").value="";
+  document.getElementById("customSets").value="";
+  document.getElementById("customReps").value="";
+  document.getElementById("customDist").value="";
+  document.getElementById("customTime").value="";
+}
+
+/* 오늘 운동 표시 */
 function renderToday(){
   if(!todayEntries.length){
     todayArea.textContent="아직 추가된 운동 없음";
@@ -480,6 +566,19 @@ function renderToday(){
   }
 
   todayArea.innerHTML=todayEntries.map(e=>{
+    /* custom 타입 처리 */
+    if(e.type==="custom"){
+      let parts=[`${e.ex} —`];
+      if(e.weight) parts.push(`${e.weight}kg`);
+      if(e.dist) parts.push(`${e.dist}km`);
+      if(e.timeLabel) parts.push(e.timeLabel);
+      if(e.sets&&e.reps) parts.push(`${e.sets}×${e.reps}`);
+      else if(e.sets) parts.push(`${e.sets}세트`);
+      else if(e.reps) parts.push(`${e.reps}회`);
+      return `<div>${parts.join(" ")}</div>`;
+    }
+
+    /* 기존 타입 처리 */
     let v=null;
     if(e.type==="weight") v=`${e.weight}kg`;
     else if(e.type==="time") v=`${e.time}분`;
@@ -499,6 +598,7 @@ function renderToday(){
   }).join("");
 }
 
+/* 오늘 저장 */
 function finishDay(){
   if(!todayEntries.length)return alert("오늘 운동 없음");
   if(!currentUser)return alert("먼저 사용자를 선택하세요.");
@@ -521,6 +621,7 @@ function finishDay(){
   alert("저장 완료!");
 }
 
+/* 기록 렌더링 */
 function renderSaved(){
   logAccordion.innerHTML="";
 
@@ -555,27 +656,49 @@ function renderSaved(){
       box.appendChild(title);
 
       groups[name].forEach(e=>{
-        let v=null;
-        if(e.type==="weight") v=`${e.weight}kg`;
-        else if(e.type==="time") v=`${e.time}분`;
-        else if(e.type==="distanceOnly") v=`${e.dist}km`;
-
-        let sr=null;
-        if(e.type==="plank") sr=`${e.sets}×${e.seconds}초`;
-        else if(e.sets&&e.reps) sr=`${e.sets}×${e.reps}`;
-        else if(e.sets) sr=`${e.sets}세트`;
-        else if(e.reps) sr=`${e.reps}회`;
-
         let display="• ";
-        if(v) display+=`${v} `;
-        if(sr) display+=`${sr}`;
+
+        if(e.type==="custom"){
+          let parts=[display.trim()];
+          if(e.weight) parts.push(`${e.weight}kg`);
+          if(e.dist) parts.push(`${e.dist}km`);
+          if(e.timeLabel) parts.push(e.timeLabel);
+          if(e.sets&&e.reps) parts.push(`${e.sets}×${e.reps}`);
+          else if(e.sets) parts.push(`${e.sets}세트`);
+          else if(e.reps) parts.push(`${e.reps}회`);
+          display=parts.join(" ");
+        }else{
+          let v=null;
+          if(e.type==="weight") v=`${e.weight}kg`;
+          else if(e.type==="time") v=`${e.time}분`;
+          else if(e.type==="distanceOnly") v=`${e.dist}km`;
+
+          let sr=null;
+          if(e.type==="plank") sr=`${e.sets}×${e.seconds}초`;
+          else if(e.sets&&e.reps) sr=`${e.sets}×${e.reps}`;
+          else if(e.sets) sr=`${e.sets}세트`;
+          else if(e.reps) sr=`${e.reps}회`;
+
+          display="• ";
+          if(v) display+=`${v} `;
+          if(sr) display+=`${sr}`;
+        }
 
         const line=document.createElement("div");
         line.className="exercise-line";
-        line.innerHTML=`
-          <span>${display}</span>
-          <span class="edit-btn" onclick="editEntry(${di},${e.index})">✏ 수정</span>
-        `;
+
+        const textSpan=document.createElement("span");
+        textSpan.textContent=display;
+        line.appendChild(textSpan);
+
+        if(e.type!=="custom"){
+          const editSpan=document.createElement("span");
+          editSpan.className="edit-btn";
+          editSpan.textContent="✏ 수정";
+          editSpan.onclick=()=>editEntry(di,e.index);
+          line.appendChild(editSpan);
+        }
+
         box.appendChild(line);
       });
 
@@ -593,8 +716,14 @@ function renderSaved(){
   });
 }
 
+/* 수정 (기본 운동만) */
 function editEntry(dateIndex,itemIndex){
   const e=saved[dateIndex].items[itemIndex];
+  if(e.type==="custom"){
+    alert("직접 입력한 운동은 여기서 수정 기능을 지원하지 않습니다.");
+    return;
+  }
+
   exerciseSelect.value=e.ex;
   renderDynamicInputs();
 
