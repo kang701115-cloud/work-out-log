@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>workout Log</title>
+  <title>Workout Log</title>
 
   <style>
     * { box-sizing: border-box; }
@@ -112,20 +112,26 @@
 
   <div class="section-title" style="margin-top:24px;">저장된 운동 기록</div>
   <div id="logAccordion"></div>
-
 </div>
 
 
 <script>
+// -------------------- 저장 변수 -----------------------
 let todayEntries = [];
 let saved = [];
 let editTarget = null;
-
 const STORAGE_KEY = "workout_log_single";
 
 document.getElementById("dateInput").value =
   new Date().toISOString().split("T")[0];
 
+const exerciseSelect = document.getElementById("exerciseSelect");
+const dynamicInputs = document.getElementById("dynamicInputs");
+const todayArea = document.getElementById("todayArea");
+const logAccordion = document.getElementById("logAccordion");
+const addEntryBtn = document.getElementById("addEntryBtn");
+
+// ----------------- 운동 타입 --------------------------
 const CONFIG = {
   "스쿼트": "weight",
   "레그 익스텐션": "weight",
@@ -138,16 +144,16 @@ const CONFIG = {
   "인터벌 러닝": "distanceOnly"
 };
 
+// ---------------- 동적 입력칸 -------------------------
 function renderDynamicInputs(){
   const type = CONFIG[exerciseSelect.value];
-  const box = document.getElementById("dynamicInputs");
 
   if(exerciseSelect.value === "custom"){
-    box.innerHTML = `
+    dynamicInputs.innerHTML = `
       <label>운동명</label>
-      <input id="customName" type="text" placeholder="운동 이름">
+      <input id="customName" type="text">
 
-      <label style="margin-top:8px;">중량 / 세트 / 횟수</label>
+      <label style="margin-top:8px;">중량/세트/횟수</label>
       <div class="inline-group">
         <input id="c_weight" type="number" placeholder="kg">
         <input id="c_sets" type="number" placeholder="세트">
@@ -155,7 +161,7 @@ function renderDynamicInputs(){
       </div>
 
       <label style="margin-top:8px;">거리(km)</label>
-      <input id="c_dist" type="number" step="0.1" placeholder="km">
+      <input id="c_dist" type="number" step="0.1">
 
       <label style="margin-top:8px;">시간</label>
       <div class="inline-group">
@@ -167,7 +173,7 @@ function renderDynamicInputs(){
   }
 
   if(type === "weight"){
-    box.innerHTML = `
+    dynamicInputs.innerHTML = `
       <label>중량 / 세트 / 횟수</label>
       <div class="inline-group">
         <input id="weight" type="number" placeholder="kg">
@@ -176,7 +182,7 @@ function renderDynamicInputs(){
       </div>`;
   }
   else if(type === "repsOnly"){
-    box.innerHTML = `
+    dynamicInputs.innerHTML = `
       <label>세트 / 횟수</label>
       <div class="inline-group">
         <input id="sets" type="number" placeholder="세트">
@@ -184,7 +190,7 @@ function renderDynamicInputs(){
       </div>`;
   }
   else if(type === "plank"){
-    box.innerHTML = `
+    dynamicInputs.innerHTML = `
       <label>세트 / 초</label>
       <div class="inline-group">
         <input id="sets" type="number" placeholder="세트">
@@ -192,12 +198,12 @@ function renderDynamicInputs(){
       </div>`;
   }
   else if(type === "time"){
-    box.innerHTML = `
+    dynamicInputs.innerHTML = `
       <label>시간(분)</label>
       <input id="time" type="number" placeholder="분">`;
   }
   else if(type === "distanceOnly"){
-    box.innerHTML = `
+    dynamicInputs.innerHTML = `
       <label>거리(km)</label>
       <input id="distance" type="number" placeholder="km">`;
   }
@@ -205,52 +211,49 @@ function renderDynamicInputs(){
 renderDynamicInputs();
 exerciseSelect.onchange = renderDynamicInputs;
 
+// ---------------- 입력 추가 --------------------------
 function addEntry(){
   const selected = exerciseSelect.value;
   let entry = {};
 
   if(selected === "custom"){
-    const name = customName.value.trim();
-    if(!name) return alert("운동명을 입력하세요.");
+    entry.ex = document.getElementById("customName").value.trim();
+    if(!entry.ex) return alert("운동명을 입력하세요.");
 
-    entry.ex = name;
     entry.custom = true;
-
-    entry.weight = +c_weight.value || null;
-    entry.sets = +c_sets.value || null;
-    entry.reps = +c_reps.value || null;
-
-    entry.dist = +c_dist.value || null;
-    entry.timeMin = +c_minutes.value || null;
-    entry.timeSec = +c_seconds.value || null;
+    entry.weight = +document.getElementById("c_weight").value || null;
+    entry.sets   = +document.getElementById("c_sets").value || null;
+    entry.reps   = +document.getElementById("c_reps").value || null;
+    entry.dist   = +document.getElementById("c_dist").value || null;
+    entry.timeMin= +document.getElementById("c_minutes").value || null;
+    entry.timeSec= +document.getElementById("c_seconds").value || null;
   }
   else {
-    const type = CONFIG[selected];
     entry.ex = selected;
-    entry.type = type;
+    entry.type = CONFIG[selected];
 
-    if(type === "weight"){
-      entry.weight = +weight.value;
-      entry.sets = +sets.value;
-      entry.reps = +reps.value;
-      if(!entry.weight || !entry.sets || !entry.reps) return alert("필수 값 입력");
+    if(entry.type === "weight"){
+      entry.weight = +document.getElementById("weight").value;
+      entry.sets   = +document.getElementById("sets").value;
+      entry.reps   = +document.getElementById("reps").value;
+      if(!entry.weight || !entry.sets || !entry.reps) return alert("필수값 입력");
     }
-    else if(type === "repsOnly"){
-      entry.sets = +sets.value;
-      entry.reps = +reps.value;
-      if(!entry.sets || !entry.reps) return alert("필수 값 입력");
+    if(entry.type === "repsOnly"){
+      entry.sets = +document.getElementById("sets").value;
+      entry.reps = +document.getElementById("reps").value;
+      if(!entry.sets || !entry.reps) return alert("필수값 입력");
     }
-    else if(type === "plank"){
-      entry.sets = +sets.value;
-      entry.seconds = +seconds.value;
-      if(!entry.sets || !entry.seconds) return alert("필수 값 입력");
+    if(entry.type === "plank"){
+      entry.sets = +document.getElementById("sets").value;
+      entry.seconds = +document.getElementById("seconds").value;
+      if(!entry.sets || !entry.seconds) return alert("필수값 입력");
     }
-    else if(type === "time"){
-      entry.time = +time.value;
+    if(entry.type === "time"){
+      entry.time = +document.getElementById("time").value;
       if(!entry.time) return alert("시간 입력");
     }
-    else if(type === "distanceOnly"){
-      entry.dist = +distance.value;
+    if(entry.type === "distanceOnly"){
+      entry.dist = +document.getElementById("distance").value;
       if(!entry.dist) return alert("거리 입력");
     }
   }
@@ -281,30 +284,31 @@ function formatEntry(e){
   }
 
   let out = e.ex + " — ";
-  if(e.type === "weight") out += `${e.weight}kg ${e.sets}×${e.reps}`;
-  if(e.type === "repsOnly") out += `${e.sets}×${e.reps}`;
-  if(e.type === "plank") out += `${e.sets}×${e.seconds}초`;
-  if(e.type === "time") out += `${e.time}분`;
-  if(e.type === "distanceOnly") out += `${e.dist}km`;
+  if(e.type==="weight") out += `${e.weight}kg ${e.sets}×${e.reps}`;
+  if(e.type==="repsOnly") out += `${e.sets}×${e.reps}`;
+  if(e.type==="plank") out += `${e.sets}×${e.seconds}초`;
+  if(e.type==="time") out += `${e.time}분`;
+  if(e.type==="distanceOnly") out += `${e.dist}km`;
   return out;
 }
 
 function renderToday(){
-  if(!todayEntries.length){
+  if(todayEntries.length===0){
     todayArea.textContent="아직 추가된 운동 없음";
     return;
   }
-  todayArea.innerHTML = todayEntries.map(e=>`<div>${formatEntry(e)}</div>`).join("");
+  todayArea.innerHTML = todayEntries.map(e => `<div>${formatEntry(e)}</div>`).join("");
 }
 
+// ---------------- 오늘 저장 ------------------------
 function finishDay(){
-  if(!todayEntries.length) return alert("운동 없음");
+  if(todayEntries.length===0) return alert("운동 없음");
 
-  const date = dateInput.value;
-  let exist = saved.find(x=>x.date===date);
+  const date = document.getElementById("dateInput").value;
 
+  let exist = saved.find(d => d.date === date);
   if(exist) exist.items.push(...todayEntries);
-  else saved.push({date,items:[...todayEntries]});
+  else saved.push({date, items:[...todayEntries]});
 
   saveLocal();
   todayEntries=[];
@@ -315,112 +319,120 @@ function finishDay(){
 function saveLocal(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
 }
+
 function loadLocal(){
   saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
 }
 loadLocal();
 
+// ---------------- 기록 렌더 -------------------------
 function renderSaved(){
-  const acc = logAccordion;
-  acc.innerHTML = "";
+  logAccordion.innerHTML="";
 
-  if(!saved.length){
-    acc.innerHTML = `<div style="color:#6b7280;margin-top:10px;">기록 없음</div>`;
+  if(saved.length===0){
+    logAccordion.innerHTML = `<div style="color:#6b7280;margin-top:10px;">기록 없음</div>`;
     return;
   }
 
   [...saved].sort((a,b)=>b.date.localeCompare(a.date))
     .forEach((session, di)=>{
-      const head = document.createElement("div");
-      head.className = "accordion-date";
-      head.innerHTML = `${session.date}<span>▶</span>`;
+      const head=document.createElement("div");
+      head.className="accordion-date";
+      head.innerHTML=`${session.date}<span>▶</span>`;
 
-      const content = document.createElement("div");
-      content.className = "accordion-content";
+      const content=document.createElement("div");
+      content.className="accordion-content";
 
-      const groups = {};
+      const groups={};
       session.items.forEach((e, ii)=>{
-        if(!groups[e.ex]) groups[e.ex] = [];
+        if(!groups[e.ex]) groups[e.ex]=[];
         groups[e.ex].push({...e, ii});
       });
 
       Object.keys(groups).forEach(exName=>{
-        const groupBox = document.createElement("div");
-        groupBox.className = "exercise-group";
+        const groupBox=document.createElement("div");
+        groupBox.className="exercise-group";
 
-        groupBox.innerHTML = `<div class="exercise-title">${exName}</div>`;
+        const title=document.createElement("div");
+        title.className="exercise-title";
+        title.textContent=exName;
+        groupBox.appendChild(title);
+
         groups[exName].forEach(e=>{
-          const line = document.createElement("div");
-          line.className = "exercise-line";
-          line.innerHTML = `
+          const line=document.createElement("div");
+          line.className="exercise-line";
+          line.innerHTML=`
             <span>${formatEntry(e)}</span>
             <span class="edit-btn" onclick="editEntry(${di},${e.ii})">✏ 수정</span>
           `;
           groupBox.appendChild(line);
         });
+
         content.appendChild(groupBox);
       });
 
-      head.onclick = ()=>{
+      head.onclick=()=>{
         const open = content.style.display==="flex";
         content.style.display = open ? "none" : "flex";
         head.querySelector("span").textContent = open ? "▶" : "▼";
       };
 
-      acc.appendChild(head);
-      acc.appendChild(content);
+      logAccordion.appendChild(head);
+      logAccordion.appendChild(content);
     });
 }
 renderSaved();
 
+// ---------------- 수정 ----------------------------
 function editEntry(di, ii){
-  editTarget = { di, ii };
+  editTarget={di, ii};
+  addEntryBtn.textContent="수정 저장";
+
   const e = saved[di].items[ii];
 
   if(e.custom){
     exerciseSelect.value="custom";
     renderDynamicInputs();
 
-    customName.value = e.ex;
-    c_weight.value = e.weight || "";
-    c_sets.value = e.sets || "";
-    c_reps.value = e.reps || "";
-    c_dist.value = e.dist || "";
-    c_minutes.value = e.timeMin || "";
-    c_seconds.value = e.timeSec || "";
+    document.getElementById("customName").value = e.ex;
+    document.getElementById("c_weight").value = e.weight || "";
+    document.getElementById("c_sets").value = e.sets || "";
+    document.getElementById("c_reps").value = e.reps || "";
+    document.getElementById("c_dist").value = e.dist || "";
+    document.getElementById("c_minutes").value = e.timeMin || "";
+    document.getElementById("c_seconds").value = e.timeSec || "";
   }
   else{
     exerciseSelect.value = e.ex;
     renderDynamicInputs();
 
     if(e.type==="weight"){
-      weight.value=e.weight;
-      sets.value=e.sets;
-      reps.value=e.reps;
+      document.getElementById("weight").value = e.weight;
+      document.getElementById("sets").value = e.sets;
+      document.getElementById("reps").value = e.reps;
     }
     if(e.type==="repsOnly"){
-      sets.value=e.sets;
-      reps.value=e.reps;
+      document.getElementById("sets").value = e.sets;
+      document.getElementById("reps").value = e.reps;
     }
     if(e.type==="plank"){
-      sets.value=e.sets;
-      seconds.value=e.seconds;
+      document.getElementById("sets").value = e.sets;
+      document.getElementById("seconds").value = e.seconds;
     }
     if(e.type==="time"){
-      time.value=e.time;
+      document.getElementById("time").value = e.time;
     }
     if(e.type==="distanceOnly"){
-      distance.value=e.dist;
+      document.getElementById("distance").value = e.dist;
     }
   }
-
-  addEntryBtn.textContent = "수정 저장";
 }
 
+// ---------------- 백업 / 복원 -----------------------
 function backupData(){
   const blob = new Blob([JSON.stringify({saved},null,2)],{type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
   a.href=url;
   a.download="workout_backup.json";
   a.click();
@@ -428,24 +440,34 @@ function backupData(){
 }
 
 function restoreData(){
-  restoreInput.click();
+  document.getElementById("restoreInput").click();
 }
 
-restoreInput.addEventListener("change", e=>{
+document.getElementById("restoreInput").addEventListener("change", e=>{
   const file=e.target.files[0];
   const reader=new FileReader();
   reader.onload=()=>{
-    try {
+    try{
       saved = JSON.parse(reader.result).saved || [];
       saveLocal();
       renderSaved();
       alert("복원 완료!");
-    } catch {
+    }catch{
       alert("JSON 오류");
     }
   };
   reader.readAsText(file);
 });
+
+document.getElementById("clearTodayBtn").onclick=()=>{
+  todayEntries=[];
+  renderToday();
+};
+document.getElementById("clearCurrentBtn").onclick=()=>{
+  renderDynamicInputs();
+};
+addEntryBtn.onclick=addEntry;
+document.getElementById("finishDayBtn").onclick=finishDay;
 </script>
 
 </body>
