@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Workout Log</title>
 
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2563eb">
 
-  <!-- Firebase (주석처리된 상태지만 남겨둠) -->
+  <!-- Firebase (비활성화: 주석) -->
   <!--
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
@@ -93,8 +94,8 @@
     }
     .exercise-line{
       font-size:13px;color:#374151;
-      margin-left:8px;display:flex;
-      align-items:center;justify-content:space-between;
+      display:flex;justify-content:space-between;
+      margin-left:8px;
     }
 
     @media(max-width:480px){
@@ -107,6 +108,7 @@
 
 <body>
 <div class="container">
+
   <h1>Workout Log</h1>
 
   <label>날짜</label>
@@ -128,10 +130,17 @@
           <option>플랭크</option>
           <option>스텝밀</option>
           <option>인터벌 러닝</option>
+          <option value="custom">기타 (직접 입력)</option>
         </select>
       </div>
 
       <div id="dynamicInputs"></div>
+    </div>
+
+    <!-- 직접 입력용 -->
+    <div id="customNameBox" style="display:none;margin-top:10px">
+      <label>직접 입력 운동명</label>
+      <input id="customExerciseName" type="text" placeholder="예: 덤벨 풀오버">
     </div>
 
     <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
@@ -149,8 +158,8 @@
     <button class="btn-ghost" id="clearTodayBtn">오늘 운동 비우기</button>
     <button class="btn-primary" id="finishDayBtn">오늘 운동 저장</button>
 
-    <button class="btn-ghost" onclick="backupData()">백업(JSON 다운로드)</button>
-    <button class="btn-ghost" onclick="restoreData()">복원(JSON 불러오기)</button>
+    <button class="btn-ghost" onclick="backupData()">백업(JSON)</button>
+    <button class="btn-ghost" onclick="restoreData()">복원(JSON)</button>
     <input type="file" id="restoreInput" accept=".json" style="display:none" />
   </div>
 
@@ -160,8 +169,7 @@
 </div>
 
 <script>
-/* ------------------ 설정 ------------------ */
-
+/* 기본 운동 타입 정의 */
 const CONFIG={
   "스쿼트":"weight",
   "레그 익스텐션":"weight",
@@ -171,57 +179,30 @@ const CONFIG={
   "레그 레이즈":"repsOnly",
   "플랭크":"plank",
   "스텝밀":"time",
-  "인터벌 러닝":"distanceOnly"
+  "인터벌 러닝":"distanceOnly",
+  "custom":"custom"
 };
 
-const STORAGE_KEY="workout_log_data";
 let todayEntries=[];
 let saved=[];
 let editTarget=null;
 
 function todayISO(){return new Date().toISOString().split("T")[0]}
 
-/* ------------------ 백업/복원 ------------------ */
+const dateInput=document.getElementById("dateInput");
+const exerciseSelect=document.getElementById("exerciseSelect");
+const dynamicInputs=document.getElementById("dynamicInputs");
+const customNameBox=document.getElementById("customNameBox");
+const todayArea=document.getElementById("todayArea");
+const logAccordion=document.getElementById("logAccordion");
 
-function backupData(){
-  const blob=new Blob([JSON.stringify(saved,null,2)],{type:"application/json"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url;
-  a.download=`workout_backup_${todayISO()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+dateInput.value=todayISO();
 
-function restoreData(){
-  document.getElementById("restoreInput").click();
-}
-
-document.getElementById("restoreInput").addEventListener("change",function(e){
-  const f=e.target.files[0];
-  if(!f)return;
-  const r=new FileReader();
-  r.onload=function(ev){
-    saved=JSON.parse(ev.target.result)||[];
-    saveLocal();
-    renderSaved();
-  };
-  r.readAsText(f);
-});
-
-/* ------------------ 로컬 저장 ------------------ */
-function loadLocal(){
-  const raw=localStorage.getItem(STORAGE_KEY);
-  saved= raw ? JSON.parse(raw) : [];
-}
-function saveLocal(){
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(saved));
-}
-
-/* ------------------ 동적 입력 ------------------ */
-
+/* 동적 입력 렌더 */
 function renderDynamicInputs(){
   const type=CONFIG[exerciseSelect.value];
+
+  customNameBox.style.display = (type==="custom") ? "block" : "none";
 
   if(type==="weight"){
     dynamicInputs.innerHTML=`
@@ -242,7 +223,7 @@ function renderDynamicInputs(){
   }
   else if(type==="plank"){
     dynamicInputs.innerHTML=`
-      <label>세트 / 시간(초)</label>
+      <label>세트 / 초</label>
       <div class="inline-group">
         <input id="sets" type="number" placeholder="세트">
         <input id="seconds" type="number" placeholder="초">
@@ -255,63 +236,53 @@ function renderDynamicInputs(){
   }
   else if(type==="distanceOnly"){
     dynamicInputs.innerHTML=`
-      <label>거리 (km)</label>
+      <label>거리(km)</label>
       <input id="distance" type="number" step="0.1" placeholder="km">`;
   }
+  else if(type==="custom"){
+    dynamicInputs.innerHTML=`
+      <label>기록 옵션(선택사항)</label>
+      <div class="inline-group">
+        <input id="weight" type="number" placeholder="kg(선택)">
+        <input id="sets" type="number" placeholder="세트">
+        <input id="reps" type="number" placeholder="횟수">
+      </div>
+      <div class="inline-group" style="margin-top:6px">
+        <input id="time" type="number" placeholder="분">
+        <input id="seconds" type="number" placeholder="초">
+        <input id="distance" type="number" step="0.1" placeholder="km">
+      </div>`;
+  }
 }
 
-/* ------------------ 운동 추가 ------------------ */
-
+/* 입력 추가 */
 function addEntry(){
-  const ex=exerciseSelect.value;
-  const type=CONFIG[ex];
+  const type=CONFIG[exerciseSelect.value];
+  let name = exerciseSelect.value;
 
-  let weight=null,sets=null,reps=null,time=null,dist=null,seconds=null;
-
-  if(type==="weight"){
-    weight=+document.getElementById("weight").value;
-    sets=+document.getElementById("sets").value;
-    reps=+document.getElementById("reps").value;
-    if(!weight||!sets||!reps)return alert("입력 필요");
-  }
-  else if(type==="repsOnly"){
-    sets=+document.getElementById("sets").value;
-    reps=+document.getElementById("reps").value;
-    if(!sets||!reps)return alert("입력 필요");
-  }
-  else if(type==="plank"){
-    sets=+document.getElementById("sets").value;
-    seconds=+document.getElementById("seconds").value;
-    if(!sets||!seconds)return alert("입력 필요");
-  }
-  else if(type==="time"){
-    time=+document.getElementById("time").value;
-    if(!time)return alert("입력 필요");
-  }
-  else if(type==="distanceOnly"){
-    dist=+document.getElementById("distance").value;
-    if(!dist)return alert("입력 필요");
+  if(type==="custom"){
+    const c = document.getElementById("customExerciseName").value.trim();
+    if(!c) return alert("운동명을 입력하세요.");
+    name=c;
   }
 
-  const newEntry={ex,type,weight,sets,reps,time,dist,seconds};
+  const entry={
+    ex:name,
+    type,
+    weight:+(document.getElementById("weight")?.value||0),
+    sets:+(document.getElementById("sets")?.value||0),
+    reps:+(document.getElementById("reps")?.value||0),
+    time:+(document.getElementById("time")?.value||0),
+    seconds:+(document.getElementById("seconds")?.value||0),
+    dist:+(document.getElementById("distance")?.value||0)
+  };
 
-  if(editTarget){
-    const d=editTarget.date;
-    const i=editTarget.index;
-    saved[d].items[i]=newEntry;
-    saveLocal();
-    editTarget=null;
-    document.getElementById("addEntryBtn").textContent="표에 추가";
-    renderSaved();
-    return;
-  }
-
-  todayEntries.push(newEntry);
+  todayEntries.push(entry);
   renderToday();
+  renderDynamicInputs();
 }
 
-/* ------------------ 오늘 운동 렌더 ------------------ */
-
+/* 오늘 운동 렌더 */
 function renderToday(){
   if(!todayEntries.length){
     todayArea.textContent="아직 추가된 운동 없음";
@@ -319,39 +290,35 @@ function renderToday(){
   }
 
   todayArea.innerHTML=todayEntries.map(e=>{
-    let v=null;
-    if(e.type==="weight") v=`${e.weight}kg`;
-    else if(e.type==="time") v=`${e.time}분`;
-    else if(e.type==="distanceOnly") v=`${e.dist}km`;
+    let list=[];
+    if(e.weight) list.push(e.weight+"kg");
+    if(e.sets && e.reps) list.push(`${e.sets}×${e.reps}`);
+    else if(e.sets) list.push(`${e.sets}세트`);
+    else if(e.reps) list.push(`${e.reps}회`);
+    if(e.time) list.push(`${e.time}분`);
+    if(e.seconds) list.push(`${e.seconds}초`);
+    if(e.dist) list.push(`${e.dist}km`);
 
-    let sr=null;
-    if(e.type==="plank") sr=`${e.sets}×${e.seconds}초`;
-    else if(e.sets&&e.reps) sr=`${e.sets}×${e.reps}`;
-
-    return `<div>${e.ex} — ${v||""} ${sr||""}</div>`;
+    return `<div>${e.ex} — ${list.join(" / ")}</div>`;
   }).join("");
 }
 
-/* ------------------ 저장된 운동 렌더 ------------------ */
-
+/* 저장 */
 function finishDay(){
-  if(!todayEntries.length)return alert("오늘 운동 없음");
-
   const date=dateInput.value;
+  if(!todayEntries.length) return alert("오늘 운동 없음.");
+
   const exist=saved.find(s=>s.date===date);
+  if(exist) exist.items.push(...todayEntries);
+  else saved.push({date,items:[...todayEntries]});
 
-  if(exist){
-    exist.items.push(...todayEntries);
-  }else{
-    saved.push({date:date,items:[...todayEntries]});
-  }
-
-  saveLocal();
+  saveAllLocal();
   todayEntries=[];
   renderToday();
   renderSaved();
 }
 
+/* 저장된 기록 렌더 */
 function renderSaved(){
   logAccordion.innerHTML="";
 
@@ -362,8 +329,7 @@ function renderSaved(){
 
   const sorted=[...saved].sort((a,b)=>b.date.localeCompare(a.date));
 
-  sorted.forEach((session,di)=>{
-
+  sorted.forEach((session)=>{
     const head=document.createElement("div");
     head.className="accordion-date";
     head.innerHTML=`${session.date}<span>▶</span>`;
@@ -372,36 +338,30 @@ function renderSaved(){
     content.className="accordion-content";
 
     const groups={};
-    session.items.forEach((e,i)=>{
-      if(!groups[e.ex])groups[e.ex]=[];
-      groups[e.ex].push({...e,index:i});
+    session.items.forEach(e=>{
+      if(!groups[e.ex]) groups[e.ex]=[];
+      groups[e.ex].push(e);
     });
 
     Object.keys(groups).forEach(name=>{
       const box=document.createElement("div");
       box.className="exercise-group";
 
-      const title=document.createElement("div");
-      title.className="exercise-title";
-      title.textContent=name;
-      box.appendChild(title);
+      box.innerHTML = `<div class="exercise-title">${name}</div>`;
 
       groups[name].forEach(e=>{
-        let v=null;
-        if(e.type==="weight") v=`${e.weight}kg`;
-        else if(e.type==="time") v=`${e.time}분`;
-        else if(e.type==="distanceOnly") v=`${e.dist}km`;
-
-        let sr=null;
-        if(e.type==="plank") sr=`${e.sets}×${e.seconds}초`;
-        else if(e.sets&&e.reps) sr=`${e.sets}×${e.reps}`;
+        let list=[];
+        if(e.weight) list.push(e.weight+"kg");
+        if(e.sets && e.reps) list.push(`${e.sets}×${e.reps}`);
+        else if(e.sets) list.push(`${e.sets}세트`);
+        else if(e.reps) list.push(`${e.reps}회`);
+        if(e.time) list.push(`${e.time}분`);
+        if(e.seconds) list.push(`${e.seconds}초`);
+        if(e.dist) list.push(`${e.dist}km`);
 
         const line=document.createElement("div");
         line.className="exercise-line";
-        line.innerHTML=`
-          <span>• ${v||""} ${sr||""}</span>
-          <span class="edit-btn" onclick="editEntry(${di},${e.index})">✏ 수정</span>
-        `;
+        line.innerHTML=`<span>• ${list.join(" / ")}</span>`;
         box.appendChild(line);
       });
 
@@ -419,60 +379,63 @@ function renderSaved(){
   });
 }
 
-/* ------------------ 수정 ------------------ */
-
-function editEntry(dateIndex,itemIndex){
-  const e=saved[dateIndex].items[itemIndex];
-
-  exerciseSelect.value=e.ex;
-  renderDynamicInputs();
-
-  if(e.type==="weight"){
-    document.getElementById("weight").value=e.weight;
-    document.getElementById("sets").value=e.sets;
-    document.getElementById("reps").value=e.reps;
-  }
-  else if(e.type==="repsOnly"){
-    document.getElementById("sets").value=e.sets;
-    document.getElementById("reps").value=e.reps;
-  }
-  else if(e.type==="plank"){
-    document.getElementById("sets").value=e.sets;
-    document.getElementById("seconds").value=e.seconds;
-  }
-  else if(e.type==="time"){
-    document.getElementById("time").value=e.time;
-  }
-  else if(e.type==="distanceOnly"){
-    document.getElementById("distance").value=e.dist;
-  }
-
-  editTarget={date:dateIndex,index:itemIndex};
-  document.getElementById("addEntryBtn").textContent="수정 저장";
+/* 로컬 저장 */
+function saveAllLocal(){
+  localStorage.setItem("workout_log_data",JSON.stringify(saved));
+}
+function loadLocal(){
+  const raw=localStorage.getItem("workout_log_data");
+  if(raw) saved=JSON.parse(raw);
 }
 
-/* ------------------ 초기화 ------------------ */
-
-function init(){
-  dateInput.value=todayISO();
-  loadLocal();
-  renderDynamicInputs();
-  renderSaved();
+/* 백업/복원 */
+function backupData(){
+  const blob=new Blob([JSON.stringify(saved,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.download=`workout_backup_${todayISO()}.json`;
+  a.href=url;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
+function restoreData(){
+  document.getElementById("restoreInput").click();
+}
+
+document.getElementById("restoreInput").addEventListener("change",function(e){
+  const file=e.target.files[0];
+  if(!file) return;
+
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      saved=JSON.parse(ev.target.result);
+      saveAllLocal();
+      renderSaved();
+    }catch{
+      alert("잘못된 JSON 입니다.");
+    }
+  };
+  reader.readAsText(file);
+});
+
+/* 초기화 */
+exerciseSelect.onchange=renderDynamicInputs;
 document.getElementById("addEntryBtn").onclick=addEntry;
-document.getElementById("clearCurrentBtn").onclick=()=>{editTarget=null;document.getElementById("addEntryBtn").textContent="표에 추가";renderDynamicInputs();}
-document.getElementById("clearTodayBtn").onclick=()=>{todayEntries=[];renderToday();}
+document.getElementById("clearCurrentBtn").onclick=()=>{
+  renderDynamicInputs();
+};
+document.getElementById("clearTodayBtn").onclick=()=>{
+  todayEntries=[];renderToday();
+};
 document.getElementById("finishDayBtn").onclick=finishDay;
 
-exerciseSelect.onchange=renderDynamicInputs;
+loadLocal();
+renderSaved();
+renderDynamicInputs();
+renderToday();
 
-init();
-
-/* ------------------ PWA ------------------ */
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("/service-worker.js?v=2");
-}
 </script>
 
 </body>
