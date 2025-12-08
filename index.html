@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workout Log</title>
+  <title>workout Log</title>
 
   <style>
     * { box-sizing: border-box; }
@@ -29,7 +29,7 @@
       font-size:13px;
     }
 
-    .inline-group { display:flex; gap:6px; }
+    .inline-group { display:flex; gap:8px; }
 
     button {
       border:none; border-radius:10px;
@@ -52,8 +52,7 @@
     .accordion-content {
       display:none; flex-direction:column;
       gap:8px; background:#fafafa;
-      border:1px solid #e5e7eb;
-      border-radius:10px;
+      border:1px solid #e5e7eb; border-radius:10px;
       padding:12px;
     }
 
@@ -64,11 +63,8 @@
       padding:8px 10px;
     }
     .exercise-title { font-weight:600; margin-bottom:6px; }
-    .exercise-line {
-      display:flex; justify-content:space-between;
-    }
+    .exercise-line { display:flex; justify-content:space-between; }
     .edit-btn { color:#2563eb; cursor:pointer; font-size:12px; }
-
   </style>
 </head>
 
@@ -80,9 +76,8 @@
   <input type="date" id="dateInput" style="margin-bottom:14px">
 
   <div class="section-title">오늘 운동 입력</div>
-  <div class="card" style="background:#f9fafb; padding:14px; border-radius:12px; border:1px solid #e5e7eb;">
+  <div class="card" style="background:#f9fafb;padding:14px;border-radius:12px;border:1px solid #e5e7eb;">
     
-    <!-- 운동 선택 -->
     <label>운동 선택</label>
     <select id="exerciseSelect" style="margin-bottom:10px;">
       <option>스쿼트</option>
@@ -97,7 +92,6 @@
       <option value="custom">그 외 운동 (직접 입력)</option>
     </select>
 
-    <!-- 동적 입력칸 -->
     <div id="dynamicInputs"></div>
 
     <button class="btn-ghost" id="clearCurrentBtn" style="margin-top:10px;">입력 초기화</button>
@@ -105,7 +99,7 @@
   </div>
 
   <div class="section-title">오늘 운동</div>
-  <div id="todayArea" style="min-height:50px; background:white; border:1px solid #e5e7eb; border-radius:10px; padding:10px;">
+  <div id="todayArea" style="min-height:50px;background:white;border:1px solid #e5e7eb;border-radius:10px;padding:10px;">
     아직 추가된 운동 없음
   </div>
 
@@ -123,18 +117,15 @@
 
 
 <script>
-/* ----------------- 저장 변수 ------------------- */
 let todayEntries = [];
 let saved = [];
 let editTarget = null;
 
 const STORAGE_KEY = "workout_log_single";
 
-/* 날짜 기본 입력 */
 document.getElementById("dateInput").value =
   new Date().toISOString().split("T")[0];
 
-/* 운동별 규칙 */
 const CONFIG = {
   "스쿼트": "weight",
   "레그 익스텐션": "weight",
@@ -147,12 +138,10 @@ const CONFIG = {
   "인터벌 러닝": "distanceOnly"
 };
 
-/* -------- 입력칸 렌더링 -------- */
 function renderDynamicInputs(){
   const type = CONFIG[exerciseSelect.value];
   const box = document.getElementById("dynamicInputs");
 
-  /* --- 커스텀 운동 --- */
   if(exerciseSelect.value === "custom"){
     box.innerHTML = `
       <label>운동명</label>
@@ -177,7 +166,6 @@ function renderDynamicInputs(){
     return;
   }
 
-  /* --- 기본 운동 UI --- */
   if(type === "weight"){
     box.innerHTML = `
       <label>중량 / 세트 / 횟수</label>
@@ -215,16 +203,12 @@ function renderDynamicInputs(){
   }
 }
 renderDynamicInputs();
-
 exerciseSelect.onchange = renderDynamicInputs;
 
-/* -------- 운동 입력 추가 -------- */
 function addEntry(){
   const selected = exerciseSelect.value;
-
   let entry = {};
 
-  /* -------- 커스텀 운동 -------- */
   if(selected === "custom"){
     const name = customName.value.trim();
     if(!name) return alert("운동명을 입력하세요.");
@@ -241,7 +225,6 @@ function addEntry(){
     entry.timeSec = +c_seconds.value || null;
   }
   else {
-    /* -------- 기본 운동 -------- */
     const type = CONFIG[selected];
     entry.ex = selected;
     entry.type = type;
@@ -272,7 +255,6 @@ function addEntry(){
     }
   }
 
-  /* 편집 모드 */
   if(editTarget){
     saved[editTarget.di].items[editTarget.ii] = entry;
     saveLocal();
@@ -287,7 +269,6 @@ function addEntry(){
   renderDynamicInputs();
 }
 
-/* -------- 출력 포맷 함수 -------- */
 function formatEntry(e){
   if(e.custom){
     let out = e.ex + " — ";
@@ -308,7 +289,6 @@ function formatEntry(e){
   return out;
 }
 
-/* -------- 오늘 렌더링 -------- */
 function renderToday(){
   if(!todayEntries.length){
     todayArea.textContent="아직 추가된 운동 없음";
@@ -317,7 +297,6 @@ function renderToday(){
   todayArea.innerHTML = todayEntries.map(e=>`<div>${formatEntry(e)}</div>`).join("");
 }
 
-/* -------- 저장 -------- */
 function finishDay(){
   if(!todayEntries.length) return alert("운동 없음");
 
@@ -341,7 +320,6 @@ function loadLocal(){
 }
 loadLocal();
 
-/* -------- 기록 렌더 -------- */
 function renderSaved(){
   const acc = logAccordion;
   acc.innerHTML = "";
@@ -351,7 +329,6 @@ function renderSaved(){
     return;
   }
 
-  /* 날짜별 정렬 */
   [...saved].sort((a,b)=>b.date.localeCompare(a.date))
     .forEach((session, di)=>{
       const head = document.createElement("div");
@@ -361,7 +338,6 @@ function renderSaved(){
       const content = document.createElement("div");
       content.className = "accordion-content";
 
-      /* 운동 그룹화 */
       const groups = {};
       session.items.forEach((e, ii)=>{
         if(!groups[e.ex]) groups[e.ex] = [];
@@ -373,7 +349,6 @@ function renderSaved(){
         groupBox.className = "exercise-group";
 
         groupBox.innerHTML = `<div class="exercise-title">${exName}</div>`;
-
         groups[exName].forEach(e=>{
           const line = document.createElement("div");
           line.className = "exercise-line";
@@ -383,7 +358,6 @@ function renderSaved(){
           `;
           groupBox.appendChild(line);
         });
-
         content.appendChild(groupBox);
       });
 
@@ -399,7 +373,6 @@ function renderSaved(){
 }
 renderSaved();
 
-/* -------- 수정 -------- */
 function editEntry(di, ii){
   editTarget = { di, ii };
   const e = saved[di].items[ii];
@@ -444,7 +417,6 @@ function editEntry(di, ii){
   addEntryBtn.textContent = "수정 저장";
 }
 
-/* -------- 백업 복원 -------- */
 function backupData(){
   const blob = new Blob([JSON.stringify({saved},null,2)],{type:"application/json"});
   const url = URL.createObjectURL(blob);
