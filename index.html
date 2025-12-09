@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Log</title>
+  <title>Workout Log</title>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
@@ -11,70 +11,27 @@
 
   <style>
     * { box-sizing: border-box; }
-
-    :root {
-      --bg:#f3f4f6;
-      --card:#ffffff;
-      --border:#d1d5db;
-      --text:#111827;
-      --subtext:#374151;
-      --accent:#2563eb;
-      --muted-bg:#f9fafb;
-      --accordion-bg:#eef2ff;
-      --accordion-border:#c7d2fe;
-      --accordion-content-bg:#fafafa;
-      --danger:#dc2626;
-    }
-
-    body.dark {
-      --bg:#111827;
-      --card:#111827;
-      --border:#4b5563;
-      --text:#f9fafb;
-      --subtext:#9ca3af;
-      --accent:#60a5fa;
-      --muted-bg:#1f2937;
-      --accordion-bg:#1e3a8a;
-      --accordion-border:#3b82f6;
-      --accordion-content-bg:#111827;
-      --danger:#f87171;
-    }
-
     body {
       margin:0; padding:20px;
       font-family: system-ui,-apple-system,"Segoe UI",sans-serif;
-      background:var(--bg);
-      color:var(--text);
+      background:#f3f4f6;
       display:flex; justify-content:center;
     }
     .container {
       width:100%; max-width:620px;
-      background:var(--card);
+      background:#fff;
       border-radius:12px;
       padding:20px;
       box-shadow:0 16px 28px rgba(0,0,0,0.12);
-      border:1px solid var(--border);
     }
-    h1 { margin:0; font-size:22px; font-weight:700;
-      display:flex; justify-content:space-between; align-items:center;
-    }
+    h1 { margin:0; font-size:22px; font-weight:700; }
 
-    .theme-toggle {
-      border:none;
-      background:transparent;
-      cursor:pointer;
-      font-size:22px;
-      padding:4px;
-    }
-
-    label { font-size:12px; color:var(--subtext); }
+    label { font-size:12px; color:#374151; }
     input, select {
       width:100%; padding:8px;
       border-radius:10px;
-      border:1px solid var(--border);
+      border:1px solid #d1d5db;
       font-size:13px;
-      background:var(--card);
-      color:var(--text);
     }
 
     .inline-group { display:flex; gap:6px; }
@@ -85,12 +42,12 @@
       padding:10px; font-size:14px; font-weight:600;
       cursor:pointer; width:100%;
     }
-    .btn-primary { background:var(--accent); color:white; }
-    .btn-ghost { background:var(--muted-bg); border:1px solid var(--border); color:var(--text); }
+    .btn-primary { background:#2563eb; color:white; }
+    .btn-ghost { background:#f9fafb; border:1px solid #d1d5db; }
 
     .accordion-date {
-      background:var(--accordion-bg);
-      border:1px solid var(--accordion-border);
+      background:#eef2ff;
+      border:1px solid #c7d2fe;
       padding:10px 14px;
       border-radius:10px;
       margin-top:12px;
@@ -100,15 +57,15 @@
     }
     .accordion-content {
       display:none; flex-direction:column;
-      gap:8px; background:var(--accordion-content-bg);
-      border:1px solid var(--border);
+      gap:8px; background:#fafafa;
+      border:1px solid #e5e7eb;
       border-radius:10px;
       padding:12px;
     }
 
     .exercise-group {
-      background:var(--card);
-      border:1px solid var(--border);
+      background:white;
+      border:1px solid #e5e7eb;
       border-radius:8px;
       padding:8px 10px;
     }
@@ -116,18 +73,15 @@
     .exercise-line {
       display:flex; justify-content:space-between; align-items:center;
     }
-    .edit-btn { color:var(--accent); cursor:pointer; font-size:12px; }
-    .delete-btn { color:var(--danger); cursor:pointer; font-size:12px; margin-left:8px; }
+    .edit-btn { color:#2563eb; cursor:pointer; font-size:12px; }
+    .delete-btn { color:#dc2626; cursor:pointer; font-size:12px; margin-left:8px; }
 
   </style>
 </head>
 
 <body>
 <div class="container">
-  <h1>
-    Workout Log
-    <button id="themeToggle" class="theme-toggle">🌙</button>
-  </h1>
+  <h1>Workout Log</h1>
 
   <!-- 날짜 -->
   <label style="margin-top:12px;">날짜</label>
@@ -135,7 +89,7 @@
 
   <!-- 운동 입력 -->
   <div class="section-title">오늘 운동 입력</div>
-  <div style="background:var(--muted-bg); padding:14px; border-radius:12px; border:1px solid var(--border);">
+  <div style="background:#f9fafb; padding:14px; border-radius:12px; border:1px solid #e5e7eb;">
 
     <label>운동 선택</label>
     <select id="exerciseSelect" style="margin-bottom:10px;">
@@ -158,7 +112,7 @@
 
   <!-- 오늘 운동 -->
   <div class="section-title">오늘 운동</div>
-  <div id="todayArea" style="min-height:50px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px;">
+  <div id="todayArea" style="min-height:50px; background:white; border:1px solid #e5e7eb; border-radius:10px; padding:10px;">
     아직 추가된 운동 없음
   </div>
 
@@ -182,7 +136,6 @@ let todayEntries = [];
 let saved = [];
 let editTarget = null;
 const STORAGE_KEY = "workout_log_single";
-const THEME_KEY = "workout_theme";
 
 /* 기본 날짜 설정 */
 document.getElementById("dateInput").value =
@@ -199,25 +152,6 @@ const CONFIG = {
   "플랭크":"plank",
   "스텝밀":"time",
   "인터벌 러닝":"distanceOnly"
-};
-
-/* ---------------- 다크모드 ---------------- */
-function applyTheme(theme) {
-  if (theme === "dark") {
-    document.body.classList.add("dark");
-    themeToggle.textContent = "☀️";
-  } else {
-    document.body.classList.remove("dark");
-    themeToggle.textContent = "🌙";
-  }
-}
-const initialTheme = localStorage.getItem(THEME_KEY) || "light";
-applyTheme(initialTheme);
-
-document.getElementById("themeToggle").onclick = () => {
-  const next = document.body.classList.contains("dark") ? "light" : "dark";
-  localStorage.setItem(THEME_KEY, next);
-  applyTheme(next);
 };
 
 /* ---------------- 동적 입력칸 ---------------- */
@@ -277,18 +211,12 @@ function renderDynamicInputs() {
   else if (type === "time") {
     box.innerHTML = `
       <label>시간(분)</label>
-      <input id="time" type="number" placeholder="분">
-
-      <label style="margin-top:8px;">메모 (선택)</label>
-      <input id="timeMemo" type="text" placeholder="예: 경사 8, 속도 5">`;
+      <input id="time" type="number" placeholder="분">`;
   }
   else if (type === "distanceOnly") {
     box.innerHTML = `
       <label>거리(km)</label>
-      <input id="distance" type="number" placeholder="km">
-
-      <label style="margin-top:8px;">메모 (선택)</label>
-      <input id="distanceMemo" type="text" placeholder="예: 6kph 100m 9kph 300m">`;
+      <input id="distance" type="number" placeholder="km">`;
   }
 }
 renderDynamicInputs();
@@ -340,12 +268,10 @@ function addEntry() {
     }
     if (type === "time") {
       entry.time = +time.value;
-      entry.memo = (timeMemo.value || "").trim();
       if (!entry.time) return alert("시간 입력 필요");
     }
     if (type === "distanceOnly") {
       entry.dist = +distance.value;
-      entry.memo = (distanceMemo.value || "").trim();
       if (!entry.dist) return alert("거리 입력 필요");
     }
   }
@@ -395,9 +321,6 @@ function formatEntry(e) {
   if (e.type === "plank") out += `${e.sets}×${e.seconds}초`;
   if (e.type === "time") out += `${e.time}분`;
   if (e.type === "distanceOnly") out += `${e.dist}km`;
-
-  if (e.memo) out += ` (${e.memo})`;
-
   return out;
 }
 
@@ -440,67 +363,62 @@ function loadLocal() {
 loadLocal();
 
 
-/* ---------------- 기록 렌더 (삭제 정확히) ---------------- */
+/* ---------------- 기록 렌더 ---------------- */
 function renderSaved() {
   const acc = document.getElementById("logAccordion");
   acc.innerHTML = "";
 
   if (!saved.length) {
-    acc.innerHTML = `<div style="color:var(--subtext);">기록 없음</div>`;
+    acc.innerHTML = `<div style="color:#6b7280;">기록 없음</div>`;
     return;
   }
 
-  // 원본 인덱스 유지하면서 날짜 기준 정렬
-  const sorted = saved
-    .map((session, idx) => ({ session, idx }))
-    .sort((a, b) => b.session.date.localeCompare(a.session.date));
+  [...saved].sort((a, b) => b.date.localeCompare(a.date))
+    .forEach((session, di) => {
+      const head = document.createElement("div");
+      head.className = "accordion-date";
+      head.innerHTML = `${session.date}<span>▶</span>`;
 
-  sorted.forEach(({ session, idx: di }) => {
-    const head = document.createElement("div");
-    head.className = "accordion-date";
-    head.innerHTML = `${session.date}<span>▶</span>`;
+      const content = document.createElement("div");
+      content.className = "accordion-content";
 
-    const content = document.createElement("div");
-    content.className = "accordion-content";
-
-    const groups = {};
-    session.items.forEach((e, ii) => {
-      if (!groups[e.ex]) groups[e.ex] = [];
-      // e 그대로 두되, 실제 인덱스 ii를 같이 저장
-      groups[e.ex].push({ entry: e, ii });
-    });
-
-    Object.keys(groups).forEach(exName => {
-      const box = document.createElement("div");
-      box.className = "exercise-group";
-
-      box.innerHTML = `<div class="exercise-title">${exName}</div>`;
-
-      groups[exName].forEach(obj => {
-        const line = document.createElement("div");
-        line.className = "exercise-line";
-        line.innerHTML = `
-          <span>${formatEntry(obj.entry)}</span>
-          <span>
-            <span class="edit-btn" onclick="editEntry(${di},${obj.ii})">수정</span>
-            <span class="delete-btn" onclick="deleteEntry(${di},${obj.ii})">삭제</span>
-          </span>
-        `;
-        box.appendChild(line);
+      const groups = {};
+      session.items.forEach((e, ii) => {
+        if (!groups[e.ex]) groups[e.ex] = [];
+        groups[e.ex].push({ ...e, ii });
       });
 
-      content.appendChild(box);
+      Object.keys(groups).forEach(exName => {
+        const box = document.createElement("div");
+        box.className = "exercise-group";
+
+        box.innerHTML = `<div class="exercise-title">${exName}</div>`;
+
+        groups[exName].forEach(e => {
+          const line = document.createElement("div");
+          line.className = "exercise-line";
+          line.innerHTML = `
+            <span>${formatEntry(e)}</span>
+            <span>
+              <span class="edit-btn" onclick="editEntry(${di},${e.ii})">수정</span>
+              <span class="delete-btn" onclick="deleteEntry(${di},${e.ii})">삭제</span>
+            </span>
+          `;
+          box.appendChild(line);
+        });
+
+        content.appendChild(box);
+      });
+
+      head.onclick = () => {
+        const open = content.style.display === "flex";
+        content.style.display = open ? "none" : "flex";
+        head.querySelector("span").textContent = open ? "▶" : "▼";
+      };
+
+      acc.appendChild(head);
+      acc.appendChild(content);
     });
-
-    head.onclick = () => {
-      const open = content.style.display === "flex";
-      content.style.display = open ? "none" : "flex";
-      head.querySelector("span").textContent = open ? "▶" : "▼";
-    };
-
-    acc.appendChild(head);
-    acc.appendChild(content);
-  });
 }
 renderSaved();
 
@@ -541,11 +459,9 @@ function editEntry(di, ii) {
     }
     if (e.type === "time") {
       time.value = e.time;
-      if (typeof e.memo === "string") timeMemo.value = e.memo;
     }
     if (e.type === "distanceOnly") {
       distance.value = e.dist;
-      if (typeof e.memo === "string") distanceMemo.value = e.memo;
     }
   }
 
@@ -601,13 +517,9 @@ document.getElementById("restoreInput").addEventListener("change", e => {
 
 
 /* ---------------- PWA ---------------- */
-<script>
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/service-worker.js").then(() => {
-    console.log("Service Worker Registered");
-  });
+  navigator.serviceWorker.register("service-worker.js");
 }
 </script>
-
-
-
+</body>
+</html>
