@@ -3,35 +3,78 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workout Log</title>
+  <title>workout Log</title>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2563eb">
 
   <style>
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; transition: background 0.25s, color 0.25s, border-color 0.25s; }
+
     body {
       margin:0; padding:20px;
       font-family: system-ui,-apple-system,"Segoe UI",sans-serif;
-      background:#f3f4f6;
+      background: var(--bg);
+      color: var(--text);
       display:flex; justify-content:center;
     }
+
+    /* --- Light Theme --- */
+    :root {
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --border: #d1d5db;
+      --text: #111827;
+      --subtext: #374151;
+      --accent: #2563eb;
+      --accordion-bg: #eef2ff;
+      --accordion-border: #c7d2fe;
+      --content-bg: #fafafa;
+    }
+
+    /* --- Dark Theme --- */
+    body.dark {
+      --bg: #111827;
+      --card: #1f2937;
+      --border: #374151;
+      --text: #f3f4f6;
+      --subtext: #9ca3af;
+      --accent: #3b82f6;
+      --accordion-bg: #1e3a8a;
+      --accordion-border: #3b82f6;
+      --content-bg: #1f2937;
+    }
+
     .container {
       width:100%; max-width:620px;
-      background:#fff;
+      background: var(--card);
       border-radius:12px;
       padding:20px;
       box-shadow:0 16px 28px rgba(0,0,0,0.12);
+      color: var(--text);
+      border:1px solid var(--border);
     }
-    h1 { margin:0; font-size:22px; font-weight:700; }
 
-    label { font-size:12px; color:#374151; }
+    h1 {
+      margin:0; font-size:22px; font-weight:700;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+
+    .toggle-btn {
+      cursor:pointer;
+      font-size:20px;
+      user-select:none;
+    }
+
+    label { font-size:12px; color: var(--subtext); }
     input, select {
       width:100%; padding:8px;
       border-radius:10px;
-      border:1px solid #d1d5db;
+      border:1px solid var(--border);
       font-size:13px;
+      background:var(--card);
+      color:var(--text);
     }
 
     .inline-group { display:flex; gap:6px; }
@@ -42,51 +85,60 @@
       padding:10px; font-size:14px; font-weight:600;
       cursor:pointer; width:100%;
     }
-    .btn-primary { background:#2563eb; color:white; }
-    .btn-ghost { background:#f9fafb; border:1px solid #d1d5db; }
+    .btn-primary { background:var(--accent); color:white; }
+    .btn-ghost { background:var(--card); border:1px solid var(--border); color:var(--text); }
 
     .accordion-date {
-      background:#eef2ff;
-      border:1px solid #c7d2fe;
+      background:var(--accordion-bg);
+      border:1px solid var(--accordion-border);
       padding:10px 14px;
       border-radius:10px;
       margin-top:12px;
       font-weight:600;
       cursor:pointer;
       display:flex; justify-content:space-between; align-items:center;
+      color: var(--text);
     }
+
     .accordion-content {
       display:none; flex-direction:column;
-      gap:8px; background:#fafafa;
-      border:1px solid #e5e7eb;
+      gap:8px; background:var(--content-bg);
+      border:1px solid var(--border);
       border-radius:10px;
       padding:12px;
     }
 
     .exercise-group {
-      background:white;
-      border:1px solid #e5e7eb;
+      background:var(--card);
+      border:1px solid var(--border);
       border-radius:8px;
       padding:8px 10px;
+      color: var(--text);
     }
+
     .exercise-title { font-weight:600; margin-bottom:6px; }
     .exercise-line {
-      display:flex; justify-content:space-between; align-items:center;
+      display:flex; justify-content:space-between; align-items:center; color: var(--text);
     }
-    .edit-btn { color:#2563eb; cursor:pointer; font-size:12px; }
+    .edit-btn { color:var(--accent); cursor:pointer; font-size:12px; }
     .delete-btn { color:#dc2626; cursor:pointer; font-size:12px; margin-left:8px; }
   </style>
 </head>
 
 <body>
 <div class="container">
-  <h1>Workout Log</h1>
 
+  <h1>
+    Workout Log
+    <span class="toggle-btn" id="themeToggle">🌙</span>
+  </h1>
+  <!-- 날짜 입력 -->
   <label style="margin-top:12px;">날짜</label>
   <input type="date" id="dateInput" style="margin-bottom:14px">
 
+  <!-- 운동 입력 -->
   <div class="section-title">오늘 운동 입력</div>
-  <div style="background:#f9fafb; padding:14px; border-radius:12px; border:1px solid #e5e7eb;">
+  <div style="background:var(--content-bg); padding:14px; border-radius:12px; border:1px solid var(--border);">
 
     <label>운동 선택</label>
     <select id="exerciseSelect" style="margin-bottom:10px;">
@@ -107,33 +159,43 @@
     <button class="btn-primary" id="addEntryBtn" style="margin-top:10px;">표에 추가</button>
   </div>
 
+  <!-- 오늘 운동 출력 -->
   <div class="section-title">오늘 운동</div>
-  <div id="todayArea" style="min-height:50px; background:white; border:1px solid #e5e7eb; border-radius:10px; padding:10px;">
+  <div id="todayArea" style="min-height:50px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px;">
     아직 추가된 운동 없음
   </div>
 
   <button class="btn-ghost" id="clearTodayBtn" style="margin-top:10px;">오늘 운동 비우기</button>
   <button class="btn-primary" id="finishDayBtn" style="margin-top:6px;">오늘 운동 저장</button>
 
+  <!-- 백업 복원 -->
   <button class="btn-ghost" id="backupBtn" style="margin-top:16px;">백업(JSON)</button>
   <button class="btn-ghost" id="restoreBtn" style="margin-top:6px;">복원(JSON)</button>
-  <input type="file" id="restoreInput" accept=".json" style="display:none" />
+  <input type="file" id="restoreInput" accept=".json" style="display:none">
 
   <div class="section-title" style="margin-top:24px;">저장된 운동 기록</div>
   <div id="logAccordion"></div>
 
-</div>
-
+</div> <!-- container end -->
 
 <script>
+/* ================================
+   상태 변수
+================================ */
 let todayEntries = [];
 let saved = [];
 let editTarget = null;
 const STORAGE_KEY = "workout_log_single";
+const THEME_KEY = "workout_theme";
 
-document.getElementById("dateInput").value =
-  new Date().toISOString().split("T")[0];
+/* ================================
+   기본 날짜
+================================ */
+dateInput.value = new Date().toISOString().split("T")[0];
 
+/* ================================
+   운동 규칙
+================================ */
 const CONFIG = {
   "스쿼트":"weight",
   "레그 익스텐션":"weight",
@@ -146,9 +208,35 @@ const CONFIG = {
   "인터벌 러닝":"distanceOnly"
 };
 
+/* ================================
+   다크모드 로딩
+================================ */
+function applyTheme(theme) {
+  if (theme === "dark") {
+    document.body.classList.add("dark");
+    themeToggle.textContent = "☀️";
+  } else {
+    document.body.classList.remove("dark");
+    themeToggle.textContent = "🌙";
+  }
+}
+
+const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+applyTheme(savedTheme);
+
+/* 토글 클릭 이벤트 */
+themeToggle.onclick = () => {
+  const newTheme = document.body.classList.contains("dark") ? "light" : "dark";
+  localStorage.setItem(THEME_KEY, newTheme);
+  applyTheme(newTheme);
+};
+
+/* ================================
+   동적 입력칸 렌더링
+================================ */
 function renderDynamicInputs() {
   const type = CONFIG[exerciseSelect.value];
-  const box = document.getElementById("dynamicInputs");
+  const box = dynamicInputs;
 
   if (exerciseSelect.value === "custom") {
     box.innerHTML = `
@@ -218,23 +306,21 @@ function renderDynamicInputs() {
     `;
   }
 }
-
 renderDynamicInputs();
 exerciseSelect.onchange = renderDynamicInputs;
 
-/* ============================
-   입력 추가
-============================ */
-function addEntry() {
+/* ================================
+   추가 버튼
+================================ */
+addEntryBtn.onclick = () => {
   const selected = exerciseSelect.value;
   let entry = {};
 
   if (selected === "custom") {
     entry.ex = c_name.value.trim();
-    if (!entry.ex) return alert("운동명 입력 필요");
+    if (!entry.ex) return alert("운동명 필수");
 
     entry.custom = true;
-
     entry.weight = +c_weight.value || null;
     entry.sets = +c_sets.value || null;
     entry.reps = +c_reps.value || null;
@@ -258,13 +344,15 @@ function addEntry() {
     if (type === "repsOnly") {
       entry.sets = +sets.value;
       entry.reps = +reps.value;
-      if (!entry.sets || !entry.reps) return alert("필수값 입력 필요");
+      if (!entry.sets || !entry.reps)
+        return alert("필수값 입력 필요");
     }
 
     if (type === "plank") {
       entry.sets = +sets.value;
       entry.seconds = +seconds.value;
-      if (!entry.sets || !entry.seconds) return alert("필수값 입력 필요");
+      if (!entry.sets || !entry.seconds)
+        return alert("필수값 입력 필요");
     }
 
     if (type === "time") {
@@ -282,9 +370,9 @@ function addEntry() {
 
   if (editTarget) {
     saved[editTarget.di].items[editTarget.ii] = entry;
-    saveLocal();
     editTarget = null;
     addEntryBtn.textContent = "표에 추가";
+    saveLocal();
     renderSaved();
     return;
   }
@@ -292,39 +380,34 @@ function addEntry() {
   todayEntries.push(entry);
   renderToday();
   renderDynamicInputs();
-}
+};
 
-addEntryBtn.onclick = addEntry;
-
-/* ============================
-   오늘 render
-============================ */
+/* ================================
+   오늘 운동 출력
+================================ */
 function renderToday() {
-  const box = todayArea;
-
   if (!todayEntries.length) {
-    box.textContent = "아직 추가된 운동 없음";
+    todayArea.textContent = "아직 추가된 운동 없음";
     return;
   }
-
-  box.innerHTML = todayEntries.map(e => `<div>${formatEntry(e)}</div>`).join("");
+  todayArea.innerHTML = todayEntries.map(e => `<div>${formatEntry(e)}</div>`).join("");
 }
 
-/* ============================
-   문자열 표시 포맷
-============================ */
+/* ================================
+   formatEntry
+================================ */
 function formatEntry(e) {
+  let out = e.ex + " — ";
+
   if (e.custom) {
-    let t = e.ex + " — ";
-    if (e.weight) t += `${e.weight}kg `;
-    if (e.sets && e.reps) t += `${e.sets}×${e.reps} `;
-    if (e.dist) t += `${e.dist}km `;
-    if (e.timeMin) t += `${e.timeMin}분 `;
-    if (e.timeSec) t += `${e.timeSec}초 `;
-    return t.trim();
+    if (e.weight) out += `${e.weight}kg `;
+    if (e.sets && e.reps) out += `${e.sets}×${e.reps} `;
+    if (e.dist) out += `${e.dist}km `;
+    if (e.timeMin) out += `${e.timeMin}분 `;
+    if (e.timeSec) out += `${e.timeSec}초 `;
+    return out.trim();
   }
 
-  let out = e.ex + " — ";
   if (e.type === "weight") out += `${e.weight}kg ${e.sets}×${e.reps}`;
   if (e.type === "repsOnly") out += `${e.sets}×${e.reps}`;
   if (e.type === "plank") out += `${e.sets}×${e.seconds}초`;
@@ -336,9 +419,9 @@ function formatEntry(e) {
   return out;
 }
 
-/* ============================
-   날짜 저장
-============================ */
+/* ================================
+   오늘 저장
+================================ */
 finishDayBtn.onclick = () => {
   if (!todayEntries.length) return alert("운동 없음");
 
@@ -348,15 +431,15 @@ finishDayBtn.onclick = () => {
   if (exist) exist.items.push(...todayEntries);
   else saved.push({ date, items: [...todayEntries] });
 
-  saveLocal();
   todayEntries = [];
   renderToday();
+  saveLocal();
   renderSaved();
 };
 
-/* ============================
-   저장 로드
-============================ */
+/* ================================
+   로컬 저장
+================================ */
 function saveLocal() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
 }
@@ -365,74 +448,70 @@ function loadLocal() {
 }
 loadLocal();
 
-/* ============================
+/* ================================
    기록 렌더
-============================ */
+================================ */
 function renderSaved() {
   logAccordion.innerHTML = "";
 
   if (!saved.length) {
-    logAccordion.innerHTML = `<div style="color:#6b7280;">기록 없음</div>`;
+    logAccordion.innerHTML = `<div style="color:var(--subtext)">기록 없음</div>`;
     return;
   }
 
-  [...saved]
-    .sort((a,b) => b.date.localeCompare(a.date))
-    .forEach((session, di) => {
+  [...saved].sort((a,b)=>b.date.localeCompare(a.date))
+  .forEach((session, di) => {
 
-      const head = document.createElement("div");
-      head.className = "accordion-date";
-      head.innerHTML = `${session.date}<span>▶</span>`;
+    const head = document.createElement("div");
+    head.className = "accordion-date";
+    head.innerHTML = `${session.date}<span>▶</span>`;
 
-      const content = document.createElement("div");
-      content.className = "accordion-content";
+    const content = document.createElement("div");
+    content.className = "accordion-content";
 
-      const groups = {};
-      session.items.forEach((e, ii) => {
-        if (!groups[e.ex]) groups[e.ex] = [];
-        groups[e.ex].push({ entry:e, realIndex:ii });
-      });
-
-      Object.keys(groups).forEach(exName => {
-        const box = document.createElement("div");
-        box.className = "exercise-group";
-
-        box.innerHTML = `<div class="exercise-title">${exName}</div>`;
-
-        groups[exName].forEach(o => {
-          const e = o.entry;
-          const line = document.createElement("div");
-          line.className = "exercise-line";
-
-          line.innerHTML = `
-            <span>${formatEntry(e)}</span>
-            <span>
-              <span class="edit-btn" onclick="editEntry(${di},${o.realIndex})">수정</span>
-              <span class="delete-btn" onclick="deleteEntry(${di},${o.realIndex})">삭제</span>
-            </span>
-          `;
-
-          box.appendChild(line);
-        });
-
-        content.appendChild(box);
-      });
-
-      head.onclick = () => {
-        const open = content.style.display === "flex";
-        content.style.display = open ? "none" : "flex";
-        head.querySelector("span").textContent = open ? "▶" : "▼";
-      };
-
-      logAccordion.appendChild(head);
-      logAccordion.appendChild(content);
+    const groups = {};
+    session.items.forEach((e, ii) => {
+      if (!groups[e.ex]) groups[e.ex] = [];
+      groups[e.ex].push({ entry:e, realIndex:ii });
     });
+
+    Object.keys(groups).forEach(name => {
+      const wrap = document.createElement("div");
+      wrap.className = "exercise-group";
+      wrap.innerHTML = `<div class="exercise-title">${name}</div>`;
+
+      groups[name].forEach(obj => {
+        const e = obj.entry;
+        const line = document.createElement("div");
+        line.className = "exercise-line";
+        line.innerHTML = `
+          <span>${formatEntry(e)}</span>
+          <span>
+            <span class="edit-btn" onclick="editEntry(${di},${obj.realIndex})">수정</span>
+            <span class="delete-btn" onclick="deleteEntry(${di},${obj.realIndex})">삭제</span>
+          </span>
+        `;
+        wrap.appendChild(line);
+      });
+
+      content.appendChild(wrap);
+    });
+
+    head.onclick = () => {
+      const open = content.style.display === "flex";
+      content.style.display = open ? "none" : "flex";
+      head.querySelector("span").textContent = open ? "▶" : "▼";
+    };
+
+    logAccordion.appendChild(head);
+    logAccordion.appendChild(content);
+  });
 }
 renderSaved();
 
-/* ============================
+/* ================================
    수정
-============================ */
+================================ */
 function editEntry(di, ii) {
   editTarget = { di, ii };
   const e = saved[di].items[ii];
@@ -448,8 +527,7 @@ function editEntry(di, ii) {
     c_dist.value = e.dist || "";
     c_min.value = e.timeMin || "";
     c_sec.value = e.timeSec || "";
-  }
-  else {
+  } else {
     if (e.type === "weight") {
       weight.value = e.weight;
       sets.value = e.sets;
@@ -476,26 +554,22 @@ function editEntry(di, ii) {
   addEntryBtn.textContent = "수정 저장";
 }
 
-/* ============================
+/* ================================
    삭제
-============================ */
+================================ */
 function deleteEntry(di, ii) {
   if (!confirm("삭제할까요?")) return;
-
   saved[di].items.splice(ii, 1);
   if (!saved[di].items.length) saved.splice(di, 1);
-
   saveLocal();
   renderSaved();
 }
 
-/* ============================
+/* ================================
    백업 / 복원
-============================ */
+================================ */
 backupBtn.onclick = () => {
-  const blob = new Blob([JSON.stringify({ saved }, null, 2)], {
-    type: "application/json"
-  });
+  const blob = new Blob([JSON.stringify({ saved }, null, 2)], { type:"application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -523,12 +597,13 @@ restoreInput.onchange = e => {
   reader.readAsText(file);
 };
 
-/* ============================
+/* ================================
    PWA
-============================ */
+================================ */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
 </script>
+
 </body>
 </html>
