@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workout Log</title>
+  <title>workout Log</title>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
@@ -385,7 +385,7 @@ function renderSaved() {
       const groups = {};
       session.items.forEach((e, ii) => {
         if (!groups[e.ex]) groups[e.ex] = [];
-        groups[e.ex].push({ ...e, ii });
+        groups[e.ex].push({ entry: e, realIndex: ii });
       });
 
       Object.keys(groups).forEach(exName => {
@@ -394,14 +394,15 @@ function renderSaved() {
 
         box.innerHTML = `<div class="exercise-title">${exName}</div>`;
 
-        groups[exName].forEach(e => {
+        groups[exName].forEach(obj => {
+          const e = obj.entry;
           const line = document.createElement("div");
           line.className = "exercise-line";
           line.innerHTML = `
             <span>${formatEntry(e)}</span>
             <span>
-              <span class="edit-btn" onclick="editEntry(${di},${e.ii})">수정</span>
-              <span class="delete-btn" onclick="deleteEntry(${di},${e.ii})">삭제</span>
+              <span class="edit-btn" onclick="editEntry(${di},${obj.realIndex})">수정</span>
+              <span class="delete-btn" onclick="deleteEntry(${di},${obj.realIndex})">삭제</span>
             </span>
           `;
           box.appendChild(line);
