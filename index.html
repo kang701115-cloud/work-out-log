@@ -3,24 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workout Log</title>
+  <title>workout Log</title>
 
   <style>
+    /* ------------------------------------ */
+    /* 기본 색상 (라이트 모드) */
+    /* ------------------------------------ */
     :root {
       --bg: #f3f4f6;
       --card: #ffffff;
       --text: #111;
       --border: #d1d5db;
-      --point:  #2A4B7C;     /* 버튼 포인트 컬러 */
+      --point: #2563eb;       /* 라이트 모드 버튼 컬러 */
     }
+
+    /* ------------------------------------ */
+    /* 다크 모드 */
+    /* ------------------------------------ */
     :root.dark {
       --bg: #121212;
       --card: #1e1e1e;
       --text: #f3f4f6;
       --border: #3f3f3f;
-      --point: #35357a;   /* 다크에서도 동일한 포인트 컬러 */
+      --point: #35357a;       /* 다크 모드 버튼 컬러 */
     }
 
+    /* ------------------------------------ */
+    /* 공통 스타일 */
+    /* ------------------------------------ */
     * { box-sizing: border-box; }
     body {
       margin:0; padding:20px;
@@ -39,18 +49,19 @@
       transition: background .25s;
       position: relative;
     }
-    h1 { margin:0; font-size:22px; font-weight:700; }
+    h1 { margin:0; font-size:22px; font-weight:700; color: var(--text); }
 
-    /* 다크모드 버튼 */
+    /* 다크모드 토글 버튼 */
     #themeToggle {
-      position:absolute;
-      top:12px;
-      right:12px;
+      position: fixed;
+      top: 12px;
+      right: 12px;
       background:none;
       border:none;
-      font-size:22px;
+      font-size:26px;
       cursor:pointer;
       color: var(--text);
+      z-index:999;
     }
 
     label { font-size:12px; color: var(--text); }
@@ -107,7 +118,7 @@
       border-radius:8px;
       padding:8px 10px;
     }
-    .exercise-title { font-weight:600; margin-bottom:6px; }
+    .exercise-title { font-weight:600; margin-bottom:6px; color: var(--text); }
 
     .exercise-line {
       display:flex; justify-content:space-between; align-items:center;
@@ -115,15 +126,14 @@
     }
     .edit-btn { color:#4e6ee9; cursor:pointer; font-size:12px; }
     .delete-btn { color:#dc2626; cursor:pointer; font-size:12px; margin-left:8px; }
+
   </style>
 </head>
 
 <body>
-<div class="container">
-
-  <!-- 🌙/☀️ 다크모드 버튼 -->
   <button id="themeToggle">🌙</button>
 
+<div class="container">
   <h1>Workout Log</h1>
 
   <!-- 날짜 -->
@@ -168,11 +178,10 @@
 </div>
 
 <script>
-/* ---------------- 다크모드 ---------------- */
+/* ---------------- 다크 모드 ---------------- */
 const root = document.documentElement;
 const themeToggle = document.getElementById("themeToggle");
 
-// 저장된 테마 적용
 if (localStorage.getItem("theme") === "dark") {
   root.classList.add("dark");
   themeToggle.textContent = "☀️";
@@ -180,7 +189,6 @@ if (localStorage.getItem("theme") === "dark") {
 
 themeToggle.onclick = () => {
   root.classList.toggle("dark");
-
   if (root.classList.contains("dark")) {
     localStorage.setItem("theme", "dark");
     themeToggle.textContent = "☀️";
@@ -190,10 +198,7 @@ themeToggle.onclick = () => {
   }
 };
 
-
-/* ---------------- 기존 workout log 코드 ---------------- */
-// (아래는 앞서 제공한 정상 작동 버전 전체와 동일함)
-
+/* ---------------- 기본 변수 ---------------- */
 let todayEntries = [];
 let saved = [];
 let editTarget = null;
@@ -213,6 +218,7 @@ const CONFIG = {
   "인터벌 러닝":"distanceOnly"
 };
 
+/* ---------------- 동적 입력 ---------------- */
 function renderDynamicInputs() {
   const type = CONFIG[exerciseSelect.value];
   const box = dynamicInputs;
@@ -269,18 +275,26 @@ function renderDynamicInputs() {
   else if (type === "time") {
     box.innerHTML = `
       <label>시간(분)</label>
-      <input id="time" type="number">`;
+      <input id="time" type="number">
+
+      <label style="margin-top:8px;">메모</label>
+      <input id="memo" type="text" placeholder="예: 경사 8%, 속도 6 → 9 패턴">
+    `;
   }
   else if (type === "distanceOnly") {
     box.innerHTML = `
       <label>거리(km)</label>
-      <input id="distance" type="number">`;
+      <input id="distance" type="number">
+
+      <label style="margin-top:8px;">메모</label>
+      <input id="memo" type="text" placeholder="예: 6kph 100m + 9kph 300m">
+    `;
   }
 }
 renderDynamicInputs();
 exerciseSelect.onchange = renderDynamicInputs;
 
-/* ---------------- 오늘 운동 추가 ---------------- */
+/* ---------------- 운동 추가 ---------------- */
 function addEntry() {
   const selected = exerciseSelect.value;
   let entry = {};
@@ -295,6 +309,7 @@ function addEntry() {
       dist: +c_dist.value || null,
       timeMin: +c_min.value || null,
       timeSec: +c_sec.value || null,
+      memo: null
     };
   }
   else {
@@ -305,25 +320,22 @@ function addEntry() {
       entry.weight = +weight.value;
       entry.sets = +sets.value;
       entry.reps = +reps.value;
-      if (!entry.weight || !entry.sets || !entry.reps) return alert("필수 입력");
     }
     if (type === "repsOnly") {
       entry.sets = +sets.value;
       entry.reps = +reps.value;
-      if (!entry.sets || !entry.reps) return alert("필수 입력");
     }
     if (type === "plank") {
       entry.sets = +sets.value;
       entry.seconds = +seconds.value;
-      if (!entry.sets || !entry.seconds) return alert("필수 입력");
     }
     if (type === "time") {
       entry.time = +time.value;
-      if (!entry.time) return alert("필수 입력");
+      entry.memo = memo.value.trim() || null;
     }
     if (type === "distanceOnly") {
       entry.dist = +distance.value;
-      if (!entry.dist) return alert("필수 입력");
+      entry.memo = memo.value.trim() || null;
     }
   }
 
@@ -348,31 +360,34 @@ function renderToday() {
     todayArea.textContent = "아직 추가된 운동 없음";
     return;
   }
-  todayArea.innerHTML = todayEntries.map(e => `<div>${formatEntry(e)}</div>`).join("");
+  todayArea.innerHTML =
+    todayEntries.map(e => `<div>${formatEntry(e)}</div>`).join("");
 }
 
-/* ---------------- format ---------------- */
+/* ---------------- 포맷 ---------------- */
 function formatEntry(e) {
+  let out = `${e.ex} — `;
+
   if (e.custom) {
-    let x = `${e.ex} — `;
-    if (e.weight) x += `${e.weight}kg `;
-    if (e.sets && e.reps) x += `${e.sets}×${e.reps} `;
-    if (e.dist) x += `${e.dist}km `;
-    if (e.timeMin) x += `${e.timeMin}분 `;
-    if (e.timeSec) x += `${e.timeSec}초 `;
-    return x.trim();
+    if (e.weight) out += `${e.weight}kg `;
+    if (e.sets && e.reps) out += `${e.sets}×${e.reps} `;
+    if (e.dist) out += `${e.dist}km `;
+    if (e.timeMin) out += `${e.timeMin}분 `;
+    if (e.timeSec) out += `${e.timeSec}초 `;
+  } else {
+    if (e.type === "weight") out += `${e.weight}kg ${e.sets}×${e.reps}`;
+    if (e.type === "repsOnly") out += `${e.sets}×${e.reps}`;
+    if (e.type === "plank") out += `${e.sets}×${e.seconds}초`;
+    if (e.type === "time") out += `${e.time}분`;
+    if (e.type === "distanceOnly") out += `${e.dist}km`;
   }
 
-  let out = `${e.ex} — `;
-  if (e.type === "weight") out += `${e.weight}kg ${e.sets}×${e.reps}`;
-  if (e.type === "repsOnly") out += `${e.sets}×${e.reps}`;
-  if (e.type === "plank") out += `${e.sets}×${e.seconds}초`;
-  if (e.type === "time") out += `${e.time}분`;
-  if (e.type === "distanceOnly") out += `${e.dist}km`;
+  if (e.memo) out += ` (${e.memo})`;
+
   return out;
 }
 
-/* ---------------- 날짜 저장 ---------------- */
+/* ---------------- 오늘 저장 ---------------- */
 finishDayBtn.onclick = function () {
   if (!todayEntries.length) return alert("운동 없음");
 
@@ -490,8 +505,14 @@ function editEntry(di, ii) {
       sets.value = e.sets;
       seconds.value = e.seconds;
     }
-    if (e.type === "time") time.value = e.time;
-    if (e.type === "distanceOnly") distance.value = e.dist;
+    if (e.type === "time") {
+      time.value = e.time;
+      memo.value = e.memo || "";
+    }
+    if (e.type === "distanceOnly") {
+      distance.value = e.dist;
+      memo.value = e.memo || "";
+    }
   }
 
   addEntryBtn.textContent = "수정 저장";
@@ -507,6 +528,14 @@ function deleteEntry(di, ii) {
   store();
   renderSaved();
 }
+
+/* ---------------- 비우기 ---------------- */
+clearTodayBtn.onclick = () => {
+  if (!todayEntries.length) return;
+  if (!confirm("오늘 운동을 모두 삭제할까요?")) return;
+  todayEntries = [];
+  renderToday();
+};
 </script>
 
 </body>
