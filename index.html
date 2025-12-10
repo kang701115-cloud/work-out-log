@@ -6,40 +6,75 @@
   <title>Workout Log</title>
 
   <style>
+    :root {
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --text: #111;
+      --border: #d1d5db;
+      --point:  #2A4B7C;     /* 버튼 포인트 컬러 */
+    }
+    :root.dark {
+      --bg: #121212;
+      --card: #1e1e1e;
+      --text: #f3f4f6;
+      --border: #3f3f3f;
+      --point: #35357a;   /* 다크에서도 동일한 포인트 컬러 */
+    }
+
     * { box-sizing: border-box; }
     body {
       margin:0; padding:20px;
-      font-family: system-ui,-apple-system,"Segoe UI",sans-serif;
-      background:#f3f4f6;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
       display:flex; justify-content:center;
+      color: var(--text);
+      transition: background .25s, color .25s;
     }
     .container {
       width:100%; max-width:620px;
-      background:#fff;
+      background: var(--card);
       border-radius:12px;
       padding:20px;
       box-shadow:0 16px 28px rgba(0,0,0,0.12);
+      transition: background .25s;
+      position: relative;
     }
     h1 { margin:0; font-size:22px; font-weight:700; }
 
-    label { font-size:12px; color:#374151; }
+    /* 다크모드 버튼 */
+    #themeToggle {
+      position:absolute;
+      top:12px;
+      right:12px;
+      background:none;
+      border:none;
+      font-size:22px;
+      cursor:pointer;
+      color: var(--text);
+    }
+
+    label { font-size:12px; color: var(--text); }
     input, select {
       width:100%; padding:8px;
       border-radius:10px;
-      border:1px solid #d1d5db;
+      border:1px solid var(--border);
       font-size:13px;
+      background: var(--card);
+      color: var(--text);
+      transition: background .25s, color .25s, border .25s;
     }
 
     .inline-group { display:flex; gap:6px; }
-    .section-title { margin-top:20px; font-weight:600; }
+    .section-title { margin-top:20px; font-weight:600; color: var(--text); }
 
     button {
       border:none; border-radius:10px;
       padding:10px; font-size:14px; font-weight:600;
       cursor:pointer; width:100%;
+      transition: background .25s, color .25s;
     }
-    .btn-primary { background:#2563eb; color:white; }
-    .btn-ghost { background:#f9fafb; border:1px solid #d1d5db; }
+    .btn-primary { background: var(--point); color:white; }
+    .btn-ghost { background: var(--card); border:1px solid var(--border); color: var(--text); }
 
     .accordion-date {
       background:#eef2ff;
@@ -50,33 +85,45 @@
       font-weight:600;
       cursor:pointer;
       display:flex; justify-content:space-between; align-items:center;
+      color:#35357a;
     }
+    :root.dark .accordion-date {
+      background:#26284a;
+      border:1px solid #3a3c62;
+      color:#d6d7ff;
+    }
+
     .accordion-content {
       display:none; flex-direction:column;
-      gap:8px; background:#fafafa;
-      border:1px solid #e5e7eb;
+      gap:8px; background:var(--card);
+      border:1px solid var(--border);
       border-radius:10px;
       padding:12px;
     }
 
     .exercise-group {
-      background:white;
-      border:1px solid #e5e7eb;
+      background:var(--card);
+      border:1px solid var(--border);
       border-radius:8px;
       padding:8px 10px;
     }
     .exercise-title { font-weight:600; margin-bottom:6px; }
+
     .exercise-line {
       display:flex; justify-content:space-between; align-items:center;
+      color: var(--text);
     }
-    .edit-btn { color:#2563eb; cursor:pointer; font-size:12px; }
+    .edit-btn { color:#4e6ee9; cursor:pointer; font-size:12px; }
     .delete-btn { color:#dc2626; cursor:pointer; font-size:12px; margin-left:8px; }
-
   </style>
 </head>
 
 <body>
 <div class="container">
+
+  <!-- 🌙/☀️ 다크모드 버튼 -->
+  <button id="themeToggle">🌙</button>
+
   <h1>Workout Log</h1>
 
   <!-- 날짜 -->
@@ -85,7 +132,7 @@
 
   <!-- 운동 입력 -->
   <div class="section-title">오늘 운동 입력</div>
-  <div style="background:#f9fafb; padding:14px; border-radius:12px; border:1px solid #e5e7eb;">
+  <div style="background:var(--card); padding:14px; border-radius:12px; border:1px solid var(--border);">
 
     <label>운동 선택</label>
     <select id="exerciseSelect" style="margin-bottom:10px;">
@@ -108,7 +155,7 @@
 
   <!-- 오늘 운동 -->
   <div class="section-title">오늘 운동</div>
-  <div id="todayArea" style="min-height:50px; background:white; border:1px solid #e5e7eb; border-radius:10px; padding:10px;">
+  <div id="todayArea" style="min-height:50px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px;">
     아직 추가된 운동 없음
   </div>
 
@@ -121,16 +168,39 @@
 </div>
 
 <script>
-/* ---------------- 변수 ---------------- */
+/* ---------------- 다크모드 ---------------- */
+const root = document.documentElement;
+const themeToggle = document.getElementById("themeToggle");
+
+// 저장된 테마 적용
+if (localStorage.getItem("theme") === "dark") {
+  root.classList.add("dark");
+  themeToggle.textContent = "☀️";
+}
+
+themeToggle.onclick = () => {
+  root.classList.toggle("dark");
+
+  if (root.classList.contains("dark")) {
+    localStorage.setItem("theme", "dark");
+    themeToggle.textContent = "☀️";
+  } else {
+    localStorage.setItem("theme", "light");
+    themeToggle.textContent = "🌙";
+  }
+};
+
+
+/* ---------------- 기존 workout log 코드 ---------------- */
+// (아래는 앞서 제공한 정상 작동 버전 전체와 동일함)
+
 let todayEntries = [];
 let saved = [];
 let editTarget = null;
 const STORAGE_KEY = "workout_log_single";
 
-/* 기본 날짜 */
 dateInput.value = new Date().toISOString().split("T")[0];
 
-/* 운동 규칙 */
 const CONFIG = {
   "스쿼트":"weight",
   "레그 익스텐션":"weight",
@@ -143,7 +213,6 @@ const CONFIG = {
   "인터벌 러닝":"distanceOnly"
 };
 
-/* ---------------- 동적 입력 ---------------- */
 function renderDynamicInputs() {
   const type = CONFIG[exerciseSelect.value];
   const box = dynamicInputs;
@@ -155,9 +224,9 @@ function renderDynamicInputs() {
 
       <label style="margin-top:8px;">중량 / 세트 / 횟수</label>
       <div class="inline-group">
-        <input id="c_weight" type="number" placeholder="kg">
-        <input id="c_sets" type="number" placeholder="세트">
-        <input id="c_reps" type="number" placeholder="횟수">
+        <input id="c_weight" type="number">
+        <input id="c_sets" type="number">
+        <input id="c_reps" type="number">
       </div>
 
       <label style="margin-top:8px;">거리(km)</label>
@@ -165,8 +234,8 @@ function renderDynamicInputs() {
 
       <label style="margin-top:8px;">시간</label>
       <div class="inline-group">
-        <input id="c_min" type="number" placeholder="분">
-        <input id="c_sec" type="number" placeholder="초">
+        <input id="c_min" type="number">
+        <input id="c_sec" type="number">
       </div>
     `;
     return;
@@ -273,7 +342,7 @@ function addEntry() {
 }
 addEntryBtn.onclick = addEntry;
 
-/* ---------------- 오늘 운동 출력 ---------------- */
+/* ---------------- 출력 ---------------- */
 function renderToday() {
   if (!todayEntries.length) {
     todayArea.textContent = "아직 추가된 운동 없음";
@@ -331,7 +400,7 @@ function load() {
 }
 load();
 
-/* ---------------- 기록 렌더링 ---------------- */
+/* ---------------- 기록 렌더 ---------------- */
 function renderSaved() {
   logAccordion.innerHTML = "";
 
