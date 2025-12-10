@@ -4,29 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json" />
-  <title>workout Log</title>
+  <title>Workout Log</title>
 
   <style>
-    /* ------------------------------------ */
+    /* ------------------------------ */
     /* 라이트 모드 색상 */
-    /* ------------------------------------ */
+    /* ------------------------------ */
     :root {
       --bg: #f3f4f6;
       --card: #ffffff;
       --text: #111;
       --border: #d1d5db;
-      --point: #2563eb;       /* 라이트 모드 버튼 컬러 */
+      --point: #2563eb;
     }
 
-    /* ------------------------------------ */
+    /* ------------------------------ */
     /* 다크 모드 */
-    /* ------------------------------------ */
+    /* ------------------------------ */
     :root.dark {
       --bg: #121212;
       --card: #1e1e1e;
       --text: #f3f4f6;
       --border: #3f3f3f;
-      --point: #35357a;       /* 다크 모드 버튼 컬러 */
+      --point: #35357a;
     }
 
     body {
@@ -35,41 +35,54 @@
       font-family: system-ui;
       background: var(--bg);
       color: var(--text);
-      transition: background .25s, color .25s;
+      transition: .25s;
+      display: flex;
+      justify-content: center;
     }
 
-    /* ------------------------ */
-    /* 다크모드 토글 버튼: container 우상단 */
-    /* ------------------------ */
-    #themeToggle {
-      position: absolute !important;
-      top: -12px !important;
-      right: -12px !important;
-      background: none !important;
-      border: none !important;
-      font-size: 30px !important;
-      cursor: pointer;
-      color: var(--text) !important;
-      z-index: 9999 !important;
-      padding:0 !important;
-      margin:0 !important;
-    }
-
+    /* ------------------------------ */
+    /* 컨테이너 */
+    /* ------------------------------ */
     .container {
       width:100%;
       max-width:620px;
       background: var(--card);
       padding:20px;
+      padding-top:55px; /* 버튼 공간 확보 */
       border-radius:12px;
-      border: 1px solid var(--border);
+      border:1px solid var(--border);
+      position: relative;  /* 버튼 기준점 */
       transition: .25s;
-      margin:0 auto;
-      margin-top:60px;
-      position: relative;       /* ★ 중요 */
     }
 
-    h1 { margin:0; font-size:24px; margin-bottom:10px; }
+    /* ------------------------------ */
+    /* 다크모드 버튼 (컨테이너 내부 상단) */
+    /* ------------------------------ */
+    #themeToggle {
+      position:absolute;
+      top:10px;
+      right:10px;
 
+      width:36px;
+      height:36px;
+      border-radius:50%;
+      background:none;
+      border:none;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      font-size:26px;
+      cursor:pointer;
+      color:var(--text);
+
+      z-index:20;
+    }
+
+    /* ------------------------------ */
+    /* 입력 UI */
+    /* ------------------------------ */
     label { font-size:12px; margin-bottom:4px; display:block; }
     
     input, select {
@@ -89,21 +102,23 @@
       font-weight:600;
       cursor:pointer;
       border:none;
-      display:block;
       margin-top:6px;
     }
 
     .btn-primary { background:var(--point); color:white; }
     .btn-ghost { background:var(--card); border:1px solid var(--border); color:var(--text); }
 
+    /* ------------------------------ */
+    /* 아코디언 */
+    /* ------------------------------ */
     .accordion-date {
       background:#eef2ff;
       border:1px solid #c7d2fe;
       padding:10px;
       border-radius:10px;
+      margin-top:10px;
       font-weight:600;
       cursor:pointer;
-      margin-top:10px;
       display:flex; justify-content:space-between;
       color:#35357a;
     }
@@ -127,22 +142,28 @@
     .exercise-group {
       background:var(--card);
       border:1px solid var(--border);
-      border-radius:8px;
       padding:8px;
+      border-radius:8px;
     }
 
     .exercise-line {
-      display:flex; justify-content:space-between;
+      display:flex;
+      justify-content:space-between;
     }
-    .delete-btn { color:#dc2626; cursor:pointer; font-size:12px; }
+
+    .delete-btn {
+      color:#dc2626;
+      cursor:pointer;
+      font-size:12px;
+    }
   </style>
 </head>
-
 
 <body>
 
   <div class="container">
-    <!-- 🌙 다크모드 버튼 (container 안에서 absolute 배치) -->
+
+    <!-- 🌙 다크모드 토글 (컨테이너 내부) -->
     <button id="themeToggle">🌙</button>
 
     <h1>Workout Log</h1>
