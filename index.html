@@ -7,82 +7,77 @@
   <title>Workout Log</title>
 
   <style>
-    /* ------------------------------ */
+    /* ------------------------------------ */
     /* 라이트 모드 색상 */
-    /* ------------------------------ */
+    /* ------------------------------------ */
     :root {
       --bg: #f3f4f6;
       --card: #ffffff;
       --text: #111;
       --border: #d1d5db;
-      --point: #2563eb;
+      --point: #2563eb;       /* 라이트 모드 버튼 컬러 */
     }
 
-    /* ------------------------------ */
+    /* ------------------------------------ */
     /* 다크 모드 */
-    /* ------------------------------ */
+    /* ------------------------------------ */
     :root.dark {
       --bg: #121212;
       --card: #1e1e1e;
       --text: #f3f4f6;
       --border: #3f3f3f;
-      --point: #35357a;
+      --point: #35357a;       /* 다크 모드 버튼 컬러 */
     }
 
     body {
-      margin:0;
-      padding:20px;
+      margin:0; padding:20px;
       font-family: system-ui;
       background: var(--bg);
       color: var(--text);
-      transition: .25s;
-      display: flex;
-      justify-content: center;
+      display:flex; justify-content:center;
+      transition: background .25s, color .25s;
     }
 
-    /* ------------------------------ */
-    /* 컨테이너 */
-    /* ------------------------------ */
+    /* ------------------------ */
+    /* container */
+    /* ------------------------ */
     .container {
       width:100%;
       max-width:620px;
       background: var(--card);
       padding:20px;
-      padding-top:55px; /* 버튼 공간 확보 */
       border-radius:12px;
-      border:1px solid var(--border);
-      position: relative;  /* 버튼 기준점 */
+      border: 1px solid var(--border);
       transition: .25s;
+      position: relative;   /* dark mode toggle 기준 */
     }
 
-    /* ------------------------------ */
-    /* 다크모드 버튼 (컨테이너 내부 상단) */
-    /* ------------------------------ */
+    /* ------------------------ */
+    /* 다크모드 버튼 (컨테이너 내부 우측 상단) */
+    /* ------------------------ */
     #themeToggle {
-      position:absolute;
-      top:10px;
-      right:10px;
+      position: absolute;
+      top: 10px;
+      right: 10px;
 
-      width:36px;
-      height:36px;
-      border-radius:50%;
-      background:none;
-      border:none;
+      background: none;
+      border: none;
 
+      font-size: 28px;
+      cursor: pointer;
+      color: var(--text);
+
+      width: 32px;
+      height: 32px;
       display:flex;
       align-items:center;
       justify-content:center;
 
-      font-size:26px;
-      cursor:pointer;
-      color:var(--text);
-
-      z-index:20;
+      z-index: 10;
     }
 
-    /* ------------------------------ */
-    /* 입력 UI */
-    /* ------------------------------ */
+    h1 { margin:0; font-size:24px; margin-bottom:10px; }
+
     label { font-size:12px; margin-bottom:4px; display:block; }
     
     input, select {
@@ -102,23 +97,21 @@
       font-weight:600;
       cursor:pointer;
       border:none;
+      display:block;
       margin-top:6px;
     }
 
     .btn-primary { background:var(--point); color:white; }
     .btn-ghost { background:var(--card); border:1px solid var(--border); color:var(--text); }
 
-    /* ------------------------------ */
-    /* 아코디언 */
-    /* ------------------------------ */
     .accordion-date {
       background:#eef2ff;
       border:1px solid #c7d2fe;
       padding:10px;
       border-radius:10px;
-      margin-top:10px;
       font-weight:600;
       cursor:pointer;
+      margin-top:10px;
       display:flex; justify-content:space-between;
       color:#35357a;
     }
@@ -142,28 +135,24 @@
     .exercise-group {
       background:var(--card);
       border:1px solid var(--border);
-      padding:8px;
       border-radius:8px;
+      padding:8px;
     }
 
     .exercise-line {
-      display:flex;
-      justify-content:space-between;
+      display:flex; justify-content:space-between;
     }
-
-    .delete-btn {
-      color:#dc2626;
-      cursor:pointer;
-      font-size:12px;
-    }
+    .edit-btn { color:#4e6ee9; cursor:pointer; font-size:12px; }
+    .delete-btn { color:#dc2626; cursor:pointer; font-size:12px; }
   </style>
 </head>
+
 
 <body>
 
   <div class="container">
 
-    <!-- 🌙 다크모드 토글 (컨테이너 내부) -->
+    <!-- ⭐ 다크모드 버튼 -->
     <button id="themeToggle">🌙</button>
 
     <h1>Workout Log</h1>
@@ -197,6 +186,11 @@
 
     <h3 style="margin-top:20px;">저장된 운동 기록</h3>
     <div id="logAccordion"></div>
+
+    <!-- JSON Backup / Restore -->
+    <button class="btn-ghost" id="backupBtn">백업(JSON)</button>
+    <button class="btn-ghost" id="restoreBtn">복원(JSON)</button>
+    <input type="file" id="restoreInput" accept=".json" style="display:none">
 
   </div>
 
@@ -315,6 +309,7 @@ function renderDynamicInputs() {
 renderDynamicInputs();
 exerciseSelect.onchange = renderDynamicInputs;
 
+/* -------------------- 운동 추가 -------------------- */
 addEntryBtn.onclick = () => {
   const selected = exerciseSelect.value;
   let entry = {};
@@ -372,6 +367,7 @@ function renderToday() {
   todayArea.innerHTML = todayEntries.map(e => formatEntry(e)).join("<br>");
 }
 
+/* -------------------- 포맷 -------------------- */
 function formatEntry(e) {
   let out = `${e.ex} — `;
   if (e.custom) {
@@ -391,6 +387,7 @@ function formatEntry(e) {
   return out;
 }
 
+/* -------------------- 오늘 운동 저장 -------------------- */
 finishDayBtn.onclick = () => {
   if (!todayEntries.length) return;
   const date = dateInput.value;
@@ -405,6 +402,7 @@ finishDayBtn.onclick = () => {
   renderSaved();
 };
 
+/* -------------------- 저장 로드 -------------------- */
 function store() {
   saved.sort((a,b) => b.date.localeCompare(a.date));
   localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
@@ -415,6 +413,7 @@ function load() {
 }
 load();
 
+/* -------------------- 기록 렌더 -------------------- */
 function renderSaved() {
   logAccordion.innerHTML = "";
 
@@ -460,6 +459,7 @@ function renderSaved() {
 }
 renderSaved();
 
+/* -------------------- 삭제 -------------------- */
 function deleteEntry(di, ii) {
   saved[di].items.splice(ii, 1);
   if (!saved[di].items.length) saved.splice(di, 1);
@@ -467,9 +467,46 @@ function deleteEntry(di, ii) {
   renderSaved();
 }
 
+/* -------------------- 오늘 비우기 -------------------- */
 clearTodayBtn.onclick = () => {
   todayEntries = [];
   renderToday();
+};
+
+/* -------------------- JSON 백업 -------------------- */
+backupBtn.onclick = () => {
+  const data = { saved };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "workout_backup.json";
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+/* -------------------- JSON 복원 -------------------- */
+restoreBtn.onclick = () => restoreInput.click();
+
+restoreInput.onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const json = JSON.parse(reader.result);
+      if (!json.saved) return alert("잘못된 JSON 파일입니다.");
+
+      saved = json.saved;
+      store();
+      renderSaved();
+      alert("복원 완료!");
+    } catch (err) {
+      alert("JSON 파싱 실패 : 형식이 잘못되었습니다.");
+    }
+  };
+  reader.readAsText(file);
 };
 </script>
 
