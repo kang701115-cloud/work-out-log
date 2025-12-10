@@ -30,11 +30,11 @@
     }
 
     body {
-      margin:0; padding:20px;
+      margin:0;
+      padding:20px;
       font-family: system-ui;
       background: var(--bg);
       color: var(--text);
-      display:flex; justify-content:center;
       transition: background .25s, color .25s;
     }
 
@@ -45,12 +45,16 @@
       position: fixed !important;
       top: 12px !important;
       right: 12px !important;
-      background: none;
-      border: none;
-      font-size: 28px;
+      background: none !important;
+      border: none !important;
+      font-size: 28px !important;
       cursor: pointer;
-      color: var(--text);
+      color: var(--text) !important;
       z-index: 99999 !important;
+      padding:0 !important;
+      margin:0 !important;
+      width:auto !important;
+      height:auto !important;
     }
 
     .container {
@@ -61,6 +65,8 @@
       border-radius:12px;
       border: 1px solid var(--border);
       transition: .25s;
+      margin:0 auto;                /* 중앙 정렬 */
+      margin-top:60px;              /* 버튼과 공간 확보 */
     }
 
     h1 { margin:0; font-size:24px; margin-bottom:10px; }
@@ -136,7 +142,7 @@
 
 
 <body>
-  <!-- ⭐ 다크모드 버튼 (body 바로 아래) -->
+  <!-- 🌙 다크모드 버튼 (body 바로 아래) -->
   <button id="themeToggle">🌙</button>
 
   <div class="container">
@@ -290,7 +296,6 @@ function renderDynamicInputs() {
 renderDynamicInputs();
 exerciseSelect.onchange = renderDynamicInputs;
 
-/* -------------------- 운동 추가 -------------------- */
 addEntryBtn.onclick = () => {
   const selected = exerciseSelect.value;
   let entry = {};
@@ -348,7 +353,6 @@ function renderToday() {
   todayArea.innerHTML = todayEntries.map(e => formatEntry(e)).join("<br>");
 }
 
-/* -------------------- 포맷 -------------------- */
 function formatEntry(e) {
   let out = `${e.ex} — `;
   if (e.custom) {
@@ -368,7 +372,6 @@ function formatEntry(e) {
   return out;
 }
 
-/* -------------------- 오늘 운동 저장 -------------------- */
 finishDayBtn.onclick = () => {
   if (!todayEntries.length) return;
   const date = dateInput.value;
@@ -383,7 +386,6 @@ finishDayBtn.onclick = () => {
   renderSaved();
 };
 
-/* -------------------- 저장 로드 -------------------- */
 function store() {
   saved.sort((a,b) => b.date.localeCompare(a.date));
   localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
@@ -394,7 +396,6 @@ function load() {
 }
 load();
 
-/* -------------------- 기록 렌더 -------------------- */
 function renderSaved() {
   logAccordion.innerHTML = "";
 
@@ -440,7 +441,6 @@ function renderSaved() {
 }
 renderSaved();
 
-/* -------------------- 삭제 -------------------- */
 function deleteEntry(di, ii) {
   saved[di].items.splice(ii, 1);
   if (!saved[di].items.length) saved.splice(di, 1);
@@ -448,7 +448,6 @@ function deleteEntry(di, ii) {
   renderSaved();
 }
 
-/* -------------------- 오늘 비우기 -------------------- */
 clearTodayBtn.onclick = () => {
   todayEntries = [];
   renderToday();
