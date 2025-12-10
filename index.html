@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json" />
-  <title>Workout Log</title>
+  <title>workout Log</title>
 
   <style>
     /* ------------------------------------ */
@@ -39,22 +39,20 @@
     }
 
     /* ------------------------ */
-    /* 다크모드 토글 버튼 최상단 고정 */
+    /* 다크모드 토글 버튼: container 우상단 */
     /* ------------------------ */
     #themeToggle {
-      position: fixed !important;
-      top: 12px !important;
-      right: 12px !important;
+      position: absolute !important;
+      top: -12px !important;
+      right: -12px !important;
       background: none !important;
       border: none !important;
-      font-size: 28px !important;
+      font-size: 30px !important;
       cursor: pointer;
       color: var(--text) !important;
-      z-index: 99999 !important;
+      z-index: 9999 !important;
       padding:0 !important;
       margin:0 !important;
-      width:auto !important;
-      height:auto !important;
     }
 
     .container {
@@ -65,8 +63,9 @@
       border-radius:12px;
       border: 1px solid var(--border);
       transition: .25s;
-      margin:0 auto;                /* 중앙 정렬 */
-      margin-top:60px;              /* 버튼과 공간 확보 */
+      margin:0 auto;
+      margin-top:60px;
+      position: relative;       /* ★ 중요 */
     }
 
     h1 { margin:0; font-size:24px; margin-bottom:10px; }
@@ -135,17 +134,16 @@
     .exercise-line {
       display:flex; justify-content:space-between;
     }
-    .edit-btn { color:#4e6ee9; cursor:pointer; font-size:12px; }
     .delete-btn { color:#dc2626; cursor:pointer; font-size:12px; }
   </style>
 </head>
 
 
 <body>
-  <!-- 🌙 다크모드 버튼 (body 바로 아래) -->
-  <button id="themeToggle">🌙</button>
 
   <div class="container">
+    <!-- 🌙 다크모드 버튼 (container 안에서 absolute 배치) -->
+    <button id="themeToggle">🌙</button>
 
     <h1>Workout Log</h1>
 
